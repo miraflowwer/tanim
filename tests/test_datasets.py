@@ -7,6 +7,7 @@ import pathlib
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 DS = ROOT / "datasets"
+DOCS = ROOT / "docs"
 
 
 def load_csv(name):
