@@ -112,7 +112,7 @@ This ratio does not prove that a glut will happen. Its meaning depends on the re
 
 TANIM accepts five reference types.
 
-1. `local_committed_demand` is confirmed local buyer, cooperative, or LGU demand. It is the only reference that may be directly described as market demand.
+1. `local_committed_demand` is the engine type for confirmed local buyer, cooperative, or LGU demand. It is the only reference that may be directly described as market demand. The MVP service does not accept this type from free-text farmer input; a reviewed source integration must provide it.
 2. `local_historical_absorption` is past local sold or accepted volume. It is a historical absorption proxy, not current or committed demand.
 3. `national_utilization_context` is national context only. TANIM does not divide local planned supply by this national amount and does not produce a GRCI risk band from it.
 4. `historical_production_baseline` compares a plan with past production. It can produce a baseline comparison, but it must not be shown as market demand or as a demand-based glut result.
@@ -191,3 +191,7 @@ The baseline file states its reference type, geography, period, and synthetic st
 A result includes the plan context, planned-area range, reference yield and source, planned-supply range, expected-production range, reference amount and unit, reference type, geography, period, reference label, evidence note, reference quality, reference mode, supply-load range when allowed, calculation status, comparison state, risk state when allowed, uncertainty state, uncertainty note, plain-language explanation, provenance, and source labels.
 
 The interface must show the reference label and evidence note. It must not infer stronger evidence than the result provides.
+
+The service also returns an evidence status. Normal manual comparisons are
+`user_provided_unverified`. Fixed demos are `fixed_synthetic`. Only a trusted
+reviewed integration may use `reviewed_verified`.

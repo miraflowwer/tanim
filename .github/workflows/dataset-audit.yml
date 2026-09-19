@@ -1,7 +1,8 @@
-name: Dataset audit
+name: TANIM audit
 
 on:
   push:
+    branches: [main]
   pull_request:
   workflow_dispatch:
   schedule:
@@ -18,12 +19,35 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Run dataset tests
+      - name: Run Python checks
         run: |
           python tests/test_datasets.py
           python tests/test_crop_registry.py
           python tests/test_yield_reference.py
           python tests/test_grci.py
+          python tests/test_service.py
+          python tests/test_mvp_e2e.py
+
+  frontend-audit:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Install frontend dependencies
+        run: npm ci
+      - name: Audit frontend dependencies
+        run: npm audit --audit-level=moderate
+      - name: Test frontend request contract
+        run: npm test
+      - name: Build farmer UI
+        run: npm run build
 
   live-openstat-audit:
     runs-on: ubuntu-latest

@@ -13,7 +13,7 @@
 - Historical yield is a production reference. It is not market demand and does not prove a glut or shortage.
 - DA weekly price monitoring in the repository is NCR-only. It is recent context, not complete Luzon price coverage.
 - PSA Supply Utilization Accounts are national. TANIM treats them as national utilization context only and never as Luzon or local demand.
-- Verified Luzon-local committed demand is not available for every crop. The GRCI result must show the exact reference type and its evidence note.
+- The MVP has no reviewed local-demand integration. Free-text farmer evidence cannot become confirmed market demand; future reviewed integrations must provide the direct reference type.
 - Local historical sold or accepted volume is an absorption proxy. It is not the same as current or committed market demand.
 - Historical production is a past-supply baseline. It can support a baseline comparison, but it must not be labelled as market demand.
 - The fixed demo comparison values are synthetic. They are not observed local market demand.

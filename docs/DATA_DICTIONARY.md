@@ -124,7 +124,9 @@ The demo baseline is not observed market demand.
 
 GRCI reference types are defined in [scripts/grci.py](../scripts/grci.py).
 
-Only `local_committed_demand` may use direct market-demand wording.
+Only reviewed `local_committed_demand` may use direct market-demand wording.
+The MVP farmer form cannot submit it from free text. Normal manual evidence is
+marked `user_provided_unverified`.
 
 `local_historical_absorption` is a historical proxy.
 

@@ -1,0 +1,41 @@
+{
+  "plans": [
+    {
+      "crop": "Tomato",
+      "region_id": "IV-A",
+      "location": "Tanauan, Batangas",
+      "farm_size_ha": 10.0,
+      "farm_size_margin_ha": 0.0,
+      "planting_date": "2026-09-01",
+      "harvest_period": "2026-12"
+    },
+    {
+      "crop": "Tomato",
+      "region_id": "IV-A",
+      "location": "Tanauan, Batangas",
+      "farm_size_ha": 10.0,
+      "farm_size_margin_ha": 0.0,
+      "planting_date": "2026-09-01",
+      "harvest_period": "2026-12"
+    },
+    {
+      "crop": "Tomato",
+      "region_id": "IV-A",
+      "location": "Tanauan, Batangas",
+      "farm_size_ha": 10.0,
+      "farm_size_margin_ha": 0.0,
+      "planting_date": "2026-09-01",
+      "harvest_period": "2026-12"
+    },
+    {
+      "crop": "Tomato",
+      "region_id": "IV-A",
+      "location": "Tanauan, Batangas",
+      "farm_size_ha": 10.0,
+      "farm_size_margin_ha": 0.0,
+      "planting_date": "2026-09-01",
+      "harvest_period": "2026-12"
+    }
+  ],
+  "use_demo_reference": true
+}
