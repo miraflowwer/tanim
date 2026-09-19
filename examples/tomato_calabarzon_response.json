@@ -1,0 +1,195 @@
+{
+  "input": {
+    "crop": "Tomato",
+    "region_id": "IV-A",
+    "municipality": "Tanauan Batangas",
+    "location": "Tanauan Batangas",
+    "farm_size_ha": 10.0,
+    "farm_size_margin_ha": 0.0,
+    "planting_date": "2026-09-01",
+    "harvest_period": "2026-12"
+  },
+  "lookup": {
+    "crop_id": "tomato",
+    "crop_record": {
+      "crop_id": "tomato",
+      "display_name": "Tomato",
+      "canonical_label": "tomato",
+      "planning_supported": true,
+      "coverage": {
+        "production": true,
+        "area": true,
+        "farmgate": true,
+        "retail": true,
+        "sua": true,
+        "nccag": true
+      },
+      "nccag": {
+        "available": true,
+        "layer": "Vegetables",
+        "specificity": "group_layer",
+        "mapping": "manual_override"
+      },
+      "source_tables": {
+        "area": [
+          "PSA-AREA-VEG-ROOT"
+        ],
+        "farmgate": [
+          "PSA-FG-FRUIT-VEG",
+          "PSA-FG-LEGACY-FRUIT-VEG"
+        ],
+        "production": [
+          "PSA-PROD-VEG-ROOT"
+        ],
+        "retail": [
+          "PSA-RETAIL-LEGACY-FRUIT-VEG"
+        ],
+        "sua": [
+          "PSA-SUA-VEGETABLES"
+        ]
+      },
+      "source_labels": {
+        "PSA-AREA-VEG-ROOT": [
+          "Tomato"
+        ],
+        "PSA-FG-FRUIT-VEG": [
+          "Tomato"
+        ],
+        "PSA-FG-LEGACY-FRUIT-VEG": [
+          "Tomato"
+        ],
+        "PSA-PROD-VEG-ROOT": [
+          "Tomato"
+        ],
+        "PSA-RETAIL-LEGACY-FRUIT-VEG": [
+          "Tomato"
+        ],
+        "PSA-SUA-VEGETABLES": [
+          "Tomato"
+        ]
+      },
+      "join_method": "exact_normalized_label",
+      "sua_scope": "national",
+      "manual_override": {
+        "crop_id": "tomato",
+        "display_name": "Tomato",
+        "demo_crop": true,
+        "nccag_layer": "Vegetables",
+        "nccag_specificity": "group_layer",
+        "note": "NCCAG provides a Vegetables layer, not a tomato-specific layer."
+      }
+    },
+    "yield_record": {
+      "crop_id": "tomato",
+      "display_name": "Tomato",
+      "region_id": "IV-A",
+      "region_label": "REGION IV-A (CALABARZON)",
+      "ref_period": "2021-2025",
+      "n_years": 5,
+      "avg_yield_mt_per_ha": 13.9462,
+      "min_yield_mt_per_ha": 12.1046,
+      "max_yield_mt_per_ha": 16.0314,
+      "unit": "mt_per_ha",
+      "source_id": "PSA-OPENSTAT-CROPS",
+      "data_status": "observed"
+    },
+    "reference_used": {
+      "amount": 375.0,
+      "unit": "MT",
+      "type": "demo_coordination_baseline",
+      "geography": "CALABARZON (IV-A)",
+      "period": "2025",
+      "from_demo": true
+    },
+    "bands": [
+      [
+        1.0,
+        "low"
+      ],
+      [
+        1.5,
+        "watch"
+      ],
+      [
+        "inf",
+        "high"
+      ]
+    ]
+  },
+  "result": {
+    "crop": "tomato",
+    "location": "Tanauan Batangas",
+    "harvest_period": "2026-12",
+    "planned_area_range": [
+      10.0,
+      10.0
+    ],
+    "reference_yield": 13.9462,
+    "yield_source": "PSA-OPENSTAT-CROPS 2021-2025 regional average yield",
+    "planned_supply_range": [
+      139.462,
+      139.462
+    ],
+    "expected_production_range": [
+      139.462,
+      139.462
+    ],
+    "reference_amount": 375.0,
+    "reference_unit": "MT",
+    "reference_type": "demo_coordination_baseline",
+    "reference_geography": "CALABARZON (IV-A)",
+    "reference_period": "2025",
+    "reference_label": "Demo coordination baseline (not market demand)",
+    "reference_evidence_note": "Synthetic DEMO-2026 baseline used only for a reproducible demo. It is not observed local market demand.",
+    "reference_quality": "synthetic",
+    "reference_scope": "demo",
+    "reference_mode": "demo",
+    "market_demand_wording_allowed": false,
+    "supply_load_range": [
+      0.37189866666666666,
+      0.37189866666666666
+    ],
+    "status": "ok",
+    "comparison_state": "low",
+    "comparison_band_range": [
+      "low",
+      "low"
+    ],
+    "risk_state": "low",
+    "risk_band_range": [
+      "low",
+      "low"
+    ],
+    "borderline": false,
+    "uncertainty_state": "point",
+    "uncertainty_note": null,
+    "explanation": "Planned area is 10 ha. At 13.9462 MT per ha, expected production is 139.462 MT. Compared with Demo coordination baseline (not market demand) of 375 MT, supply load is 0.371899 ratio. Demo risk state is low. Synthetic DEMO-2026 baseline used only for a reproducible demo. It is not observed local market demand.",
+    "provenance": {
+      "yield_source": "PSA-OPENSTAT-CROPS 2021-2025 regional average yield",
+      "yield_crop_id": "tomato",
+      "yield_region_id": "IV-A",
+      "yield_ref_period": "2021-2025",
+      "yield_n_years": 5,
+      "yield_unit": "mt_per_ha",
+      "yield_source_id": "PSA-OPENSTAT-CROPS",
+      "reference_type": "demo_coordination_baseline",
+      "reference_amount": 375.0,
+      "reference_unit": "MT",
+      "reference_geography": "CALABARZON (IV-A)",
+      "reference_period": "2025",
+      "source_labels": [
+        "PSA-OPENSTAT-CROPS",
+        "DEMO-2026"
+      ],
+      "reference_label": "Demo coordination baseline (not market demand)",
+      "reference_evidence_note": "Synthetic DEMO-2026 baseline used only for a reproducible demo. It is not observed local market demand.",
+      "reference_quality": "synthetic",
+      "reference_mode": "demo"
+    },
+    "source_labels": [
+      "PSA-OPENSTAT-CROPS",
+      "DEMO-2026"
+    ]
+  },
+  "error": null
+}
