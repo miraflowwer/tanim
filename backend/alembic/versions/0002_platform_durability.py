@@ -35,7 +35,8 @@ def upgrade() -> None:
     op.execute(text("ALTER TABLE data_source_versions ADD COLUMN IF NOT EXISTS normalization_version TEXT"))
     op.execute(text("ALTER TABLE data_source_versions ADD COLUMN IF NOT EXISTS staged_at TIMESTAMPTZ"))
     op.execute(text("ALTER TABLE data_source_versions ADD COLUMN IF NOT EXISTS promoted_by UUID"))
-    op.execute(text("ALTER TABLE data_source_versions ADD COLUMN IF NOT EXISTS is_current BOOLEAN NOT NULL DEFAULT FALSE"))    platform_models.Base.metadata.create_all(bind=op.get_bind())
+    op.execute(text("ALTER TABLE data_source_versions ADD COLUMN IF NOT EXISTS is_current BOOLEAN NOT NULL DEFAULT FALSE"))
+    platform_models.Base.metadata.create_all(bind=op.get_bind())
     op.execute(text("""
         CREATE OR REPLACE FUNCTION tanim_current_user_id()
         RETURNS uuid LANGUAGE sql STABLE AS $$

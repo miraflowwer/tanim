@@ -87,7 +87,7 @@ def validate_rows(
             period_end = _date(raw.get("period_end"), "period_end")
             if period_end < period_start:
                 raise ValueError("date_range_invalid")
-            if period_start > today + timedelta(days=1):
+            if period_start > today:
                 raise ValueError("date_future")
             if (today - period_end).days > configured_age:
                 raise ValueError("data_stale")
