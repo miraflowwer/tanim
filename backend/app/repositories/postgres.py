@@ -257,7 +257,7 @@ class PostgresRepository:
         return source
     def create_source_version(self, *, source: DataSource, values: dict[str, Any]) -> dict[str, Any]:
         latest = int(self.session.execute(select(func.max(DataSourceVersion.version)).where(DataSourceVersion.source_id == source.id)).scalar() or 0) + 1
-        row = DataSourceVersion(source_id=source.id, version=latest, checksum=values.get("checksum"), payload_ref=values.get("payload_ref"), period_start=values.get("period_start"), period_end=values.get("period_end"), row_count=int(values.get("row_count", 0)), validation_status=values.get("validation_status", "valid"), validation_errors=values.get("validation_errors"), normalization_version=values.get("normalization_version"), staged_at=datetime.now(UTC))
+        row = DataSourceVersion(source_id=source.id, version=latest, checksum=checksum, payload_ref=values.get("payload_ref"), period_start=values.get("period_start"), period_end=values.get("period_end"), row_count=int(values.get("row_count", 0)), validation_status=values.get("validation_status", "valid"), validation_errors=values.get("validation_errors"), normalization_version=values.get("normalization_version"), staged_at=datetime.now(UTC))
         self.session.add(row); self.session.flush()
         return self.version_dict(row)
     def promote_source_version(self, *, key: str, version: int) -> dict[str, Any]:

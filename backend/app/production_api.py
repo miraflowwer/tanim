@@ -335,6 +335,10 @@ def metrics():
 def me(user: ProductionUser = Depends(get_current_user)):
     return {"id": user.user_id, "user_id": user.user_id, "email": user.email, "organizations": user.org_roles, "is_platform": user.is_platform, "auth_provider": "supabase"}
 
+@app.post("/api/v1/auth/session", status_code=405)
+def auth_session():
+    raise api_error(405, "external_auth_only", "Supabase Auth owns sign-in, refresh, and recovery sessions.")
+
 @app.get("/api/v1/organizations/{org_id}")
 def get_organization(org_id: str, user: ProductionUser = Depends(get_current_user)):
     def action(repo: PostgresRepository):
@@ -541,7 +545,8 @@ def transition_reference(reference_id: str, transition: str, payload: ReviewPayl
     require_role(user, organization_id, {"reviewer", "org_admin"})
     if transition not in {"verify", "reject", "supersede", "expire"}:
         raise api_error(404, "not_found", "The reference transition was not found.")
-    return run_db(lambda repo: repo.transition_reference(reference_id, transition, payload.note), user=user, org_id=organization_id)
+    target = {"verify": "verified", "reject": "rejected", "supersede": "superseded", "expire": "expired"}[transition]
+    return run_db(lambda repo: repo.transition_reference(reference_id, target, payload.note), user=user, org_id=organization_id)
 
 @app.get("/api/v1/policies")
 def policies(organization_id: str | None = None, user: ProductionUser = Depends(get_current_user)):

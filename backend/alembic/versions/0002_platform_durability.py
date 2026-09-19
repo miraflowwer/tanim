@@ -67,6 +67,8 @@ def downgrade() -> None:
         op.execute(text(f'ALTER TABLE IF EXISTS "{table}" DISABLE ROW LEVEL SECURITY'))
     op.execute(text("ALTER TABLE data_source_versions DROP CONSTRAINT IF EXISTS fk_data_source_versions_promoted_by"))
     op.execute(text("ALTER TABLE ingestion_runs DROP CONSTRAINT IF EXISTS fk_ingestion_runs_requested_by"))
+    op.execute(text("DROP INDEX IF EXISTS uq_data_source_versions_source_checksum"))
+    op.execute(text("DROP INDEX IF EXISTS uq_data_source_versions_source_version"))
     op.drop_table("rate_limit_buckets")
     op.drop_table("ingestion_runs")
     for table in reversed(_ORG_TABLES):

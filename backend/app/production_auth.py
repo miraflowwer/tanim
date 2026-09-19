@@ -106,4 +106,6 @@ async def get_current_user(request: Request) -> ProductionUser:
         raise _error(503, "auth_backend_unavailable", "Sign-in verification is temporarily unavailable.") from exc
     if identity is None:
         raise _error(403, "unknown_user", "This account is not provisioned for TANIM.")
-    return _to_user(identity)
+    user = _to_user(identity)
+    request.state.user_id = user.user_id
+    return user
