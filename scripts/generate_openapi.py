@@ -34,8 +34,11 @@ def main() -> int:
         if not OUT.exists() or OUT.read_text(encoding="utf-8") != generated:
             print("openapi/openapi.json differs from FastAPI app.openapi(); regenerate and commit it.")
             if os.environ.get("GITHUB_ACTIONS") == "true":
+                encoded = base64.b64encode(generated.encode("utf-8")).decode("ascii")
                 print("OPENAPI_B64_BEGIN")
-                print(base64.b64encode(generated.encode("utf-8")).decode("ascii"))
+                for offset in range(0, len(encoded), 4000):
+                    chunk = encoded[offset : offset + 4000]
+                    print(f"OPENAPI_B64_CHUNK_{offset // 4000}={chunk}")
                 print("OPENAPI_B64_END")
             return 1
         print("OpenAPI matches FastAPI.")
