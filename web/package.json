@@ -1,0 +1,20 @@
+{
+  "name": "tanim-farmer-ui",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "TANIM Step 7 farmer-facing MVP UI (Vite + React, mock-first). Displays precomputed GRCI results only.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview --port 4173"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.2",
+    "vite": "^5.4.8"
+  }
+}
