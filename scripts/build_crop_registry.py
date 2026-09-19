@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+import csv
 import json
 import pathlib
 import re
@@ -9,7 +10,9 @@ import urllib.request
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / "datasets" / "openstat_tables.json"
 REGISTRY = ROOT / "datasets" / "crop_registry.json"
+NCCAG = ROOT / "datasets" / "nccag_reference.json"
 DEFAULT_OUT = ROOT / "datasets" / "generated" / "crop_registry.generated.json"
+DEFAULT_COVERAGE = ROOT / "datasets" / "generated" / "crop_coverage.csv"
 USER_AGENT = "TANIM/2026 crop registry builder"
 
 CROP_HINTS = ("crop", "commodity", "item", "product")
@@ -17,6 +20,7 @@ SKIP_HINTS = (
     "geo", "region", "province", "location", "year", "month", "quarter",
     "semester", "period", "frequency", "unit", "indicator", "element",
 )
+COVERAGE_FAMILIES = ("production", "area", "farmgate", "retail", "sua")
 
 
 def read_json(path):
@@ -110,8 +114,46 @@ def override_lookup(config):
     return result
 
 
-def make_runtime_registry(index, config):
+def nccag_lookup(nccag):
+    return {
+        normalize_crop_label(layer): layer
+        for layer in nccag.get("crop_suitability_layers", [])
+    }
+
+
+def nccag_context(key, override, layers):
+    if override and override.get("nccag_layer"):
+        layer = override["nccag_layer"]
+        if normalize_crop_label(layer) not in layers:
+            raise RuntimeError(
+                f"{override['crop_id']}: unknown NCCAG layer {layer}"
+            )
+        return {
+            "available": True,
+            "layer": layer,
+            "specificity": override.get("nccag_specificity", "manual"),
+            "mapping": "manual_override",
+        }
+
+    if key in layers:
+        return {
+            "available": True,
+            "layer": layers[key],
+            "specificity": "direct_label",
+            "mapping": "exact_normalized_label",
+        }
+
+    return {
+        "available": False,
+        "layer": None,
+        "specificity": None,
+        "mapping": None,
+    }
+
+
+def make_runtime_registry(index, config, nccag):
     overrides = override_lookup(config)
+    layers = nccag_lookup(nccag)
     crops = []
     used_ids = set()
 
@@ -127,13 +169,18 @@ def make_runtime_registry(index, config):
             raise RuntimeError(f"duplicate generated crop_id: {crop_id}")
         used_ids.add(crop_id)
 
+        context = nccag_context(key, override, layers)
         display_name = override["display_name"] if override else key.title()
+        coverage = {family: family in families for family in COVERAGE_FAMILIES}
+        coverage["nccag"] = context["available"]
+
         crop = {
             "crop_id": crop_id,
             "display_name": display_name,
             "canonical_label": key,
             "planning_supported": True,
-            "matched_families": sorted(families),
+            "coverage": coverage,
+            "nccag": context,
             "source_tables": {
                 family: sorted(set(table_keys))
                 for family, table_keys in sorted(entry["families"].items())
@@ -144,6 +191,8 @@ def make_runtime_registry(index, config):
             },
             "join_method": "exact_normalized_label",
         }
+        if coverage["sua"]:
+            crop["sua_scope"] = "national"
         if override:
             crop["manual_override"] = {
                 field: value for field, value in override.items()
@@ -151,13 +200,104 @@ def make_runtime_registry(index, config):
             }
         crops.append(crop)
 
-    return {
+    runtime = {
         "schema_version": config["schema_version"],
+        "verified_as_of": config["verified_as_of"],
+        "source_manifest_verified_as_of": read_json(MANIFEST)["verified_as_of"],
         "scope": config["scope"],
         "join_method": "exact_normalized_label",
+        "planning_rule": "production_and_area_required",
         "crop_count": len(crops),
         "crops": crops,
     }
+    validate_runtime_registry(runtime)
+    return runtime
+
+
+def validate_runtime_registry(runtime):
+    crops = runtime["crops"]
+    ids = [crop["crop_id"] for crop in crops]
+    if len(ids) != len(set(ids)):
+        raise RuntimeError("runtime crop registry has duplicate crop_id values")
+    if not crops:
+        raise RuntimeError("No crops have both production and area coverage")
+
+    for crop in crops:
+        coverage = crop["coverage"]
+        if not coverage["production"] or not coverage["area"]:
+            raise RuntimeError(
+                f"{crop['crop_id']}: planning crop lacks production or area coverage"
+            )
+
+
+def coverage_rows(runtime):
+    rows = []
+    for crop in runtime["crops"]:
+        coverage = crop["coverage"]
+        rows.append({
+            "crop_id": crop["crop_id"],
+            "display_name": crop["display_name"],
+            "production": "yes" if coverage["production"] else "no",
+            "area": "yes" if coverage["area"] else "no",
+            "farmgate": "yes" if coverage["farmgate"] else "no",
+            "retail": "yes" if coverage["retail"] else "no",
+            "sua_context": "yes" if coverage["sua"] else "no",
+            "sua_scope": crop.get("sua_scope", ""),
+            "nccag_context": "yes" if coverage["nccag"] else "no",
+            "nccag_layer": crop["nccag"]["layer"] or "",
+            "nccag_specificity": crop["nccag"]["specificity"] or "",
+            "demo_crop": "yes" if crop.get("manual_override", {}).get("demo_crop") else "no",
+        })
+    return rows
+
+
+def write_runtime_registry(path, runtime):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(runtime, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+
+
+def write_coverage_csv(path, runtime):
+    rows = coverage_rows(runtime)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fields = [
+        "crop_id", "display_name", "production", "area", "farmgate", "retail",
+        "sua_context", "sua_scope", "nccag_context", "nccag_layer",
+        "nccag_specificity", "demo_crop",
+    ]
+    with path.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=fields, lineterminator="\n")
+        writer.writeheader()
+        writer.writerows(rows)
+
+
+def audit_committed_snapshot(runtime, snapshot_path):
+    if not snapshot_path.exists():
+        return
+
+    committed = read_json(snapshot_path)
+    current = {crop["crop_id"]: crop for crop in runtime["crops"]}
+    missing = sorted(
+        crop["crop_id"] for crop in committed.get("crops", [])
+        if crop["crop_id"] not in current
+    )
+    if missing:
+        raise RuntimeError(
+            "Previously supported Explorer crops disappeared: " + ", ".join(missing)
+        )
+
+    downgraded = []
+    for old in committed.get("crops", []):
+        new = current[old["crop_id"]]
+        for family in ("production", "area"):
+            if old.get("coverage", {}).get(family) and not new["coverage"].get(family):
+                downgraded.append(f"{old['crop_id']}:{family}")
+    if downgraded:
+        raise RuntimeError(
+            "Required crop coverage was downgraded: " + ", ".join(downgraded)
+        )
 
 
 def main():
@@ -166,30 +306,35 @@ def main():
     )
     parser.add_argument("--output", type=pathlib.Path, default=DEFAULT_OUT)
     parser.add_argument(
+        "--coverage-output",
+        type=pathlib.Path,
+        default=DEFAULT_COVERAGE,
+    )
+    parser.add_argument(
         "--check-only",
         action="store_true",
-        help="Build and validate the registry without writing a file.",
+        help="Build and audit the live registry without replacing generated files.",
     )
     args = parser.parse_args()
 
     manifest = read_json(MANIFEST)
     config = read_json(REGISTRY)
+    nccag = read_json(NCCAG)
     index = collect_label_index(manifest)
-    registry = make_runtime_registry(index, config)
-
-    if registry["crop_count"] == 0:
-        raise RuntimeError("No crops have both production and area coverage")
+    runtime = make_runtime_registry(index, config, nccag)
 
     if args.check_only:
-        print(f"OK: {registry['crop_count']} planning crops can be joined safely")
+        audit_committed_snapshot(runtime, args.output)
+        print(
+            f"OK: {runtime['crop_count']} Explorer crops have safe production "
+            "and area joins"
+        )
         return
 
-    args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(
-        json.dumps(registry, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-    )
-    print(f"Wrote {registry['crop_count']} crops to {args.output}")
+    write_runtime_registry(args.output, runtime)
+    write_coverage_csv(args.coverage_output, runtime)
+    print(f"Wrote {runtime['crop_count']} crops to {args.output}")
+    print(f"Wrote coverage matrix to {args.coverage_output}")
 
 
 if __name__ == "__main__":

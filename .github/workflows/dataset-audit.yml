@@ -32,3 +32,13 @@ jobs:
           python-version: "3.12"
       - name: Verify every PSA OpenSTAT table
         run: python scripts/fetch_openstat_luzon.py --verify-only
+      - name: Audit live crop registry
+        run: python scripts/build_crop_registry.py --check-only
+      - name: Build live crop registry snapshot
+        run: python scripts/build_crop_registry.py
+      - name: Upload crop registry snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: crop-registry-snapshot
+          path: datasets/generated/
+          if-no-files-found: error
