@@ -41,14 +41,27 @@ function normalize(parts: string[]): { route: string; rest: string[] } {
   return { route: parts[0] || "home", rest: parts.slice(1) };
 }
 
+// Member 1 canonical routes render without a nav entry.
+const KNOWN_M1_ROUTES = new Set([
+  "plan-new", "plan-detail", "result", "adjust",
+  "crop-detail", "farm-new", "farm-detail",
+  "account-profile", "account-security",
+]);
+
 export function parseHash(hash = window.location.hash): ParsedRoute {
   const parts = hash.replace(/^#\/?/, "").split("/").filter((p) => p.length > 0);
   if (parts.length === 0) return { route: "home", param: "", rest: [] };
+  // The skip link targets #main: it is a focus target, never a route.
+  if (parts[0] === "main") return { route: "home", param: "", rest: [] };
   const { route, rest } = normalize(parts);
   const known = ALL_NAVIGATION.some((item) => item.id === route)
     || ALL_NAVIGATION.some((item) => item.id === parts[0])
     || DETAIL_ROUTE_IDS.has(route)
-    || DETAIL_ROUTE_IDS.has(parts[0]);
+    || DETAIL_ROUTE_IDS.has(parts[0])
+    || KNOWN_M1_ROUTES.has(route)
+    || PUBLIC_ROUTES.has(route)
+    || route.startsWith("onboarding-")
+    || route === "invite";
 
   if (!known) return { route: "404", param: "", rest: [] };
   return { route, param: decodeURIComponent(rest[0] ?? ""), rest };

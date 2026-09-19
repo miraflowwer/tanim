@@ -187,6 +187,9 @@ export function AppShell({ navLabel, nav, current, topbarExtra, children, bottom
         <main id="main" tabIndex={-1}>{children}</main>
       </div>
       {bottomNav}
+      <footer>
+        <p className="hint">Demo data is synthetic and labeled where shown. Farmer names stay hidden in group views.</p>
+      </footer>
     </div>
   );
 }
