@@ -205,3 +205,71 @@ export interface NewPlanInput {
   plantingDate: string;
   harvestPeriod: string;
 }
+
+// Member 1 Wave A view models. Snake_case stays at the API boundary in
+// lib/api.ts; these camelCase models are for rendering only.
+export interface Farm {
+  id: string;
+  organizationId: string;
+  name: string;
+  municipality: string | null;
+  region: string | null;
+  totalAreaHa: number | null;
+  mine: boolean;
+}
+
+export interface NewFarmInput {
+  name: string;
+  municipality: string;
+  region: string;
+  totalAreaHa: number | null;
+}
+
+export interface PlanRevision {
+  revisionNumber: number;
+  areaHa: number;
+  areaMarginHa: number;
+  plantingDate: string;
+  harvestPeriod: string;
+  createdBy: string;
+  createdAt: string;
+}
+
+export interface CalculationRun {
+  calculationId: string;
+  revisionNumber: number;
+  timestamp: string;
+  engineVersion: string;
+  policyVersion: string;
+  status: CoordinationStatus;
+  expectedProductionMt: number | null;
+  coordinationState: string;
+}
+
+export interface CropDetail {
+  code: string;
+  name: string;
+  supported: boolean;
+  yieldMtPerHa: number | null;
+  yieldGeography: string | null;
+  priceNote: string;
+  climateNote: string;
+  suitabilityNote: string;
+}
+
+export type ConsentType = "operational" | "research";
+
+export interface ConsentRecord {
+  consentType: ConsentType;
+  purpose: string;
+  policyVersion: string;
+  active: boolean;
+}
+
+export interface InviteDetail {
+  token: string;
+  organization: string;
+  role: string;
+  expires: string;
+  state: "valid" | "expired" | "revoked" | "accepted" | "declined";
+}

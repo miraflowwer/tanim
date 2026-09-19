@@ -18,10 +18,10 @@ This is the live implementation status, not a replacement for the finalized prod
 
 | Workstream | Owner | Status |
 |---|---|---|
-| Shared frontend + responsive shell | Member 1 | Ready |
-| Auth/account frontend | Member 1 | Ready |
-| Organization onboarding frontend | Member 1 | Ready |
-| Farmer workspace | Member 1 | Ready |
+| Shared frontend + responsive shell | Member 1 | Complete | Role-aware `AppShell`/`PublicShell`, Farmer bottom nav (<=5), drawer, sheets, tokens in `app/src/components/layout/Shell.tsx` + `app/src/styles.css` |
+| Auth/account frontend | Member 1 | Complete | `app/src/features/auth/auth.views.tsx` (login/register/verify/recovery/session-expired/profile/security); real session via `POST /api/v1/auth/session`, lifecycle gaps filed as API-001..API-003 |
+| Organization onboarding frontend | Member 1 | Complete | `app/src/features/onboarding/onboarding.views.tsx` (organization/invite/consent/first-farm); invite/org gaps filed as API-004 |
+| Farmer workspace | Member 1 | Complete | Farms/plans (filters, detail tabs, history/calculations)/result/adjust/crops/calendar/map/privacy in `app/src/features/{farms,plans,crops,farmer}`; history depth gap filed as API-005 |
 | Coordinator workspace | Member 2 | Ready |
 | Maps/charts/context | Member 2 | Ready |
 | Evidence/Reviewer | Member 2 | Ready |

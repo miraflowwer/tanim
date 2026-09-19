@@ -3,6 +3,13 @@ import {
   type ApiErrorIssue,
   type ApiPlanResource,
   type AggregateRow,
+  type CalculationRun,
+  type ConsentRecord,
+  type ConsentType,
+  type CropDetail,
+  type Farm,
+  type NewFarmInput,
+  type PlanRevision,
   type ReferenceRecord,
   type RefWorkflow,
   type CalculateResponse,
@@ -97,7 +104,7 @@ function authHeaders(): HeadersInit {
 }
 
 async function apiRequest<T>(
-  method: "GET" | "POST" | "PATCH",
+  method: "GET" | "POST" | "PATCH" | "DELETE",
   path: string,
   body: unknown,
   decode: (value: unknown) => T,
@@ -127,6 +134,10 @@ function get<T>(path: string, decode: (value: unknown) => T): Promise<T> {
 
 function patch<T>(path: string, body: unknown, decode: (value: unknown) => T): Promise<T> {
   return apiRequest("PATCH", path, body, decode);
+}
+
+function del<T>(path: string, decode: (value: unknown) => T): Promise<T> {
+  return apiRequest("DELETE", path, undefined, decode);
 }
 
 function dateForApi(value: string): string {
@@ -410,6 +421,226 @@ export async function fetchReferences(organizationId: string): Promise<Reference
     if (!Array.isArray(root.references)) throw new ServerError("SERVICE_UNAVAILABLE", 200, "The API returned an invalid reference list.");
     return root.references.map(decodeReference);
   });
+}
+
+// --- Member 1 Wave A: farms / plans / calculations / crops / consent ---
+// All wrappers hit the real versioned API. Anything the backend does not
+// offer yet is filed in docs/implementation/API_REQUESTS.md, never faked here.
+
+function decodeFarm(value: unknown): Farm {
+  const root = requiredRecord(value, "farm");
+  const total = root.total_area_ha;
+  return {
+    id: requiredString(root.id, "farm ID"),
+    organizationId: requiredString(root.org_id ?? root.organization_id, "farm organization"),
+    name: requiredString(root.name, "farm name"),
+    municipality: typeof root.municipality === "string" ? root.municipality : null,
+    region: typeof root.region === "string" ? root.region : null,
+    totalAreaHa: typeof total === "number" && Number.isFinite(total) ? total : null,
+    mine: true, // list endpoint already scopes farmers to their own farms
+  };
+}
+
+export async function fetchFarms(organizationId: string): Promise<Farm[]> {
+  return get(`/api/v1/farms?org_id=${encodeURIComponent(organizationId)}`, (payload) => {
+    const root = requiredRecord(payload, "farm list");
+    if (!Array.isArray(root.farms)) throw new ServerError("SERVICE_UNAVAILABLE", 200, "The API returned an invalid farm list.");
+    return root.farms.map(decodeFarm);
+  });
+}
+
+export async function fetchFarm(farmId: string): Promise<Farm> {
+  return get(`/api/v1/farms/${encodeURIComponent(farmId)}`, decodeFarm);
+}
+
+export async function createFarmFull(organizationId: string, input: NewFarmInput): Promise<Farm> {
+  return post("/api/v1/farms", {
+    organization_id: organizationId,
+    name: input.name,
+    municipality: input.municipality || null,
+    region: input.region || null,
+    total_area_ha: input.totalAreaHa,
+  }, decodeFarm);
+}
+
+export async function updateFarm(farmId: string, organizationId: string, input: NewFarmInput): Promise<Farm> {
+  return patch(`/api/v1/farms/${encodeURIComponent(farmId)}`, {
+    organization_id: organizationId,
+    name: input.name,
+    municipality: input.municipality || null,
+    region: input.region || null,
+    total_area_ha: input.totalAreaHa,
+  }, decodeFarm);
+}
+
+export async function fetchPlans(organizationId: string): Promise<ApiPlanResource[]> {
+  return get(`/api/v1/plans?org_id=${encodeURIComponent(organizationId)}`, (payload) => {
+    const root = requiredRecord(payload, "plan list");
+    if (!Array.isArray(root.plans)) throw new ServerError("SERVICE_UNAVAILABLE", 200, "The API returned an invalid plan list.");
+    return root.plans.map(decodePlan);
+  });
+}
+
+export async function fetchPlan(planId: string): Promise<ApiPlanResource> {
+  return get(`/api/v1/plans/${encodeURIComponent(planId)}`, decodePlan);
+}
+
+export async function cancelPlan(planId: string): Promise<void> {
+  await del(`/api/v1/plans/${encodeURIComponent(planId)}`, () => undefined);
+}
+
+function decodeRevision(value: unknown): PlanRevision {
+  const root = requiredRecord(value, "plan revision");
+  return {
+    revisionNumber: requiredNumber(root.revision_number, "revision number"),
+    areaHa: requiredNumber(root.area_ha, "revision area"),
+    areaMarginHa: requiredNumber(root.area_margin_ha ?? 0, "revision uncertainty"),
+    plantingDate: stringValue(root.planting_date),
+    harvestPeriod: stringValue(root.harvest_period),
+    createdBy: stringValue(root.created_by),
+    createdAt: stringValue(root.created_at),
+  };
+}
+
+export async function fetchRevisions(planId: string): Promise<PlanRevision[]> {
+  return get(`/api/v1/plans/${encodeURIComponent(planId)}/revisions`, (payload) => {
+    const root = requiredRecord(payload, "revision list");
+    if (!Array.isArray(root.revisions)) throw new ServerError("SERVICE_UNAVAILABLE", 200, "The API returned invalid revisions.");
+    return root.revisions.map(decodeRevision);
+  });
+}
+
+export async function fetchCalculation(
+  calculationId: string,
+  context: { crop: string; harvestPeriod: string },
+): Promise<CalculateResponse> {
+  return get(`/api/v1/calculations/${encodeURIComponent(calculationId)}`, (value) =>
+    decodeCalculation(value, context));
+}
+
+export function toCalculationRuns(
+  revisions: PlanRevision[],
+  latest: CalculateResponse | undefined,
+): CalculationRun[] {
+  return revisions.map((rev) => ({
+    calculationId: latest && rev.revisionNumber === revisions.length ? latest.calculationId : `rev-${rev.revisionNumber}`,
+    revisionNumber: rev.revisionNumber,
+    timestamp: rev.createdAt,
+    engineVersion: latest?.provenance.engineVersion ?? "unknown",
+    policyVersion: latest?.provenance.calculationPolicyVersion ?? "unknown",
+    status: latest && rev.revisionNumber === revisions.length ? latest.coordinationStatus : "more_evidence_needed",
+    expectedProductionMt: latest && rev.revisionNumber === revisions.length ? latest.estimatedProductionMt : null,
+    coordinationState: latest && rev.revisionNumber === revisions.length ? latest.headline : "No calculation recorded for this revision yet.",
+  }));
+}
+
+export async function fetchCrops(): Promise<CropDetail[]> {
+  return get("/api/v1/crops", (payload) => {
+    const root = requiredRecord(payload, "crop list");
+    if (!Array.isArray(root.crops)) throw new ServerError("SERVICE_UNAVAILABLE", 200, "The API returned an invalid crop list.");
+    return root.crops.map((item): CropDetail => {
+      const row = requiredRecord(item, "crop");
+      const code = requiredString(row.code ?? row.crop_code, "crop code");
+      return {
+        code,
+        name: stringValue(row.name, code),
+        supported: row.is_active !== false,
+        yieldMtPerHa: nullableNumber(row.yield_mt_per_ha),
+        yieldGeography: typeof row.geography === "string" ? row.geography : null,
+        priceNote: "Market price is context only — never the reviewed comparison reference.",
+        climateNote: "Suitability and climate are context only, not planting recommendations.",
+        suitabilityNote: "Suitability is contextual information, not an automatic planting recommendation.",
+      };
+    });
+  });
+}
+
+export async function fetchCropYield(code: string, geography: string): Promise<number | null> {
+  try {
+    const row = await get(
+      `/api/v1/crops/${encodeURIComponent(code)}/yield?geography=${encodeURIComponent(geography)}`,
+      (payload) => requiredRecord(payload, "yield reference"),
+    );
+    return nullableNumber(row.yield_mt_per_ha);
+  } catch (error: unknown) {
+    if (isServerError(error) && (error.code === "YIELD_UNAVAILABLE" || error.status === 404)) return null;
+    throw error;
+  }
+}
+
+export interface PriceRow {
+  cropCode: string;
+  price: number;
+  unit: string;
+  date: string;
+  geography: string;
+  source: string;
+}
+
+export async function fetchPrices(cropCode?: string): Promise<PriceRow[]> {
+  const query = cropCode ? `?crop_code=${encodeURIComponent(cropCode)}` : "";
+  return get(`/api/v1/prices${query}`, (payload) => {
+    const root = requiredRecord(payload, "price list");
+    if (!Array.isArray(root.prices)) return [];
+    return root.prices.map((item): PriceRow => {
+      const row = requiredRecord(item, "price");
+      return {
+        cropCode: stringValue(row.crop_code),
+        price: nullableNumber(row.price ?? row.latest_price) ?? 0,
+        unit: stringValue(row.unit, "PHP/kg"),
+        date: stringValue(row.date),
+        geography: stringValue(row.geography),
+        source: stringValue(row.source),
+      };
+    });
+  });
+}
+
+export async function fetchClimateNote(geography?: string): Promise<string> {
+  const query = geography ? `?geography=${encodeURIComponent(geography)}` : "";
+  const rows = await get(`/api/v1/context/climate${query}`, (payload) => {
+    const root = requiredRecord(payload, "climate");
+    return Array.isArray(root.climate) ? root.climate : [];
+  });
+  if (rows.length === 0) return "Weather context is not available right now. Your coordination result does not depend on it.";
+  const first = requiredRecord(rows[0], "climate row");
+  return stringValue(first.summary ?? first.outlook, "Seasonal outlook available. Context only — not part of the coordination result.");
+}
+
+export async function fetchMyConsents(organizationId: string): Promise<ConsentRecord[]> {
+  return get(`/api/v1/consents/me?org_id=${encodeURIComponent(organizationId)}`, (payload) => {
+    const root = requiredRecord(payload, "consent list");
+    if (!Array.isArray(root.consents)) return [];
+    return root.consents.map((item): ConsentRecord => {
+      const row = requiredRecord(item, "consent");
+      const kind = stringValue(row.consent_type);
+      return {
+        consentType: kind === "research" ? "research" : "operational",
+        purpose: stringValue(row.purpose),
+        policyVersion: stringValue(row.policy_version),
+        active: row.active !== false,
+      };
+    });
+  });
+}
+
+export async function grantConsent(
+  organizationId: string,
+  consentType: ConsentType,
+  purpose: string,
+  policyVersion: string,
+): Promise<void> {
+  await post(`/api/v1/consents?org_id=${encodeURIComponent(organizationId)}`, {
+    consent_type: consentType,
+    purpose,
+    policy_version: policyVersion,
+  }, () => undefined);
+}
+
+export async function withdrawConsent(organizationId: string, consentType: ConsentType): Promise<void> {
+  await post(`/api/v1/consents/withdraw?org_id=${encodeURIComponent(organizationId)}`, {
+    consent_type: consentType,
+  }, () => undefined);
 }
 
 export async function transitionReference(
