@@ -59,12 +59,16 @@ def upgrade() -> None:
     op.drop_constraint("ck_audit_action", "audit_events", type_="check")
     op.create_check_constraint("ck_audit_action", "audit_events", "action IN ('reference.created','reference.submitted','reference.verified','reference.rejected','reference.superseded','source.promoted','policy.changed','role.changed','member.removed','export.created','reference.corrected','reference.reopened','reference.expired','invitation.created','invitation.revoked','notification.created','organization.updated','setting.changed','ingestion.started','ingestion.validated','ingestion.promoted','session.revoked')")
 
+    op.execute(text('DROP POLICY IF EXISTS "tanim_audit_events_tenant" ON audit_events'))
+    _policy("audit_events", "tanim_audit_events_tenant", "org_id = tanim_current_org_id() OR (org_id IS NULL AND current_setting('app.current_role', true) = 'platform_admin')", "org_id = tanim_current_org_id() OR (org_id IS NULL AND current_setting('app.current_role', true) = 'platform_admin')")
 def downgrade() -> None:
     op.drop_constraint("ck_audit_action", "audit_events", type_="check")
     op.create_check_constraint("ck_audit_action", "audit_events", "action IN ('reference.created','reference.submitted','reference.verified','reference.rejected','reference.superseded','source.promoted','policy.changed','role.changed','member.removed','export.created','reference.corrected','reference.reopened','reference.expired')")
     for table in ("ingestion_runs", *reversed(_ORG_TABLES), "user_sessions"):
         op.execute(text(f'DROP POLICY IF EXISTS "tanim_{table}_tenant" ON "{table}"'))
         op.execute(text(f'ALTER TABLE IF EXISTS "{table}" DISABLE ROW LEVEL SECURITY'))
+    op.execute(text('DROP POLICY IF EXISTS "tanim_audit_events_tenant" ON audit_events'))
+    _policy("audit_events", "tanim_audit_events_tenant", "org_id = tanim_current_org_id()", "org_id = tanim_current_org_id()")
     op.execute(text("ALTER TABLE data_source_versions DROP CONSTRAINT IF EXISTS fk_data_source_versions_promoted_by"))
     op.execute(text("ALTER TABLE ingestion_runs DROP CONSTRAINT IF EXISTS fk_ingestion_runs_requested_by"))
     op.execute(text("DROP INDEX IF EXISTS uq_data_source_versions_source_checksum"))
