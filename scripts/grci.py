@@ -8,6 +8,13 @@ Risk thresholds are supplied by the caller.
 import csv
 import math
 import pathlib
+import re as _re
+from datetime import UTC
+from datetime import date as _date
+from datetime import datetime as _datetime
+
+
+ENGINE_VERSION = "0.1.0"
 
 
 YIELD_SUMMARY_DEFAULT = (
@@ -91,6 +98,70 @@ REFERENCE_TYPES = {
         "market_demand_wording_allowed": False,
     },
 }
+
+# Verification states (quality/review state, separate from reference type).
+VERIFICATION_STATES = (
+    "reviewed_verified",
+    "user_provided_unverified",
+    "official_context",
+    "synthetic_demo",
+    "stale",
+    "superseded",
+)
+
+# Only reviewed local evidence may enter L; everything else is context-only.
+ELIGIBLE_TYPES = frozenset(
+    {"local_committed_demand", "local_historical_absorption"}
+)
+
+
+def is_eligible(reference_type, verification_status):
+    """Eligibility: only reviewed_verified local demand/absorption enters L."""
+    return (
+        reference_type in ELIGIBLE_TYPES
+        and verification_status == "reviewed_verified"
+    )
+
+
+def estimate_production(area_ha, yield_mt_per_ha, area_margin_ha=0.0):
+    """Return S, S_low, S_high, A_low, A_high (S = A x Y, clamp at zero)."""
+    area = _finite_number(area_ha, "farm size estimate")
+    margin = _finite_number(area_margin_ha, "farm size margin")
+    if not area > 0:
+        raise ValueError("area_ha must be > 0")
+    if not margin >= 0:
+        raise ValueError("area_margin_ha must be >= 0")
+    reference_yield = _finite_number(yield_mt_per_ha, "reference yield")
+    if not reference_yield > 0:
+        raise ValueError("yield_mt_per_ha must be > 0")
+    area_low, area_high = area_range(area, margin)
+    supply_low, supply_high = planned_supply_range(
+        area_low, area_high, reference_yield
+    )
+    return {
+        "s_mt": area * reference_yield,
+        "s_low_mt": supply_low,
+        "s_high_mt": supply_high,
+        "a_low_ha": area_low,
+        "a_high_ha": area_high,
+    }
+
+
+def supply_load(supply_mt, reference_mt):
+    """Return L = S / R. Raises ValueError if reference missing/non-positive."""
+    supply = _finite_number(supply_mt, "supply amount")
+    if supply < 0:
+        raise ValueError("supply_mt must be >= 0")
+    if reference_mt is None:
+        raise ValueError(
+            "reference_mt must be > 0; missing evidence is not substitutable"
+        )
+    reference = _finite_number(reference_mt, "reference amount")
+    if not reference > 0:
+        raise ValueError(
+            "reference_mt must be > 0; missing evidence is not substitutable"
+        )
+    return supply / reference
 
 
 def normalize_reference_type(value):
@@ -972,3 +1043,349 @@ def compute_grci(
     )
 
     return result
+
+# --- authoritative planning/evidence policy (production) ---
+# These policy constants and helpers are intentionally kept in this framework
+# independent module.  The FastAPI adapter re-exports them; it does not
+# recalculate or redefine domain policy.
+
+ACTIVE_PLAN_STATUSES = frozenset({"draft", "planned"})
+INACTIVE_PLAN_STATUSES = frozenset({"harvested", "cancelled"})
+PLAN_STATUSES = ACTIVE_PLAN_STATUSES | INACTIVE_PLAN_STATUSES
+
+REVIEW_STATES = (
+    "draft",
+    "under_review",
+    "verified",
+    "rejected",
+    "superseded",
+    "expired",
+)
+REVIEW_TRANSITIONS = {
+    "draft": frozenset({"under_review"}),
+    "under_review": frozenset({"verified", "rejected"}),
+    # A rejected candidate may be corrected and resubmitted.
+    "rejected": frozenset({"draft", "under_review"}),
+    "verified": frozenset({"superseded", "expired"}),
+    "superseded": frozenset(),
+    "expired": frozenset(),
+}
+TERMINAL_REVIEW_STATES = frozenset({"superseded", "expired"})
+REFERENCE_REVIEW_STATES = REVIEW_STATES
+REFERENCE_REVIEW_TRANSITIONS = REVIEW_TRANSITIONS
+ELIGIBLE_VERIFICATION_STATES = frozenset({"reviewed_verified"})
+REFERENCE_ELIGIBLE_TYPES = ELIGIBLE_TYPES
+
+
+def is_active_plan_status(status):
+    """Return whether a plan contributes to future coordination totals."""
+    if status is None:
+        return False
+    return str(status).strip().casefold() in ACTIVE_PLAN_STATUSES
+
+
+def is_active_plan(plan):
+    """Return whether a plan record contributes to future coordination totals."""
+    return isinstance(plan, dict) and is_active_plan_status(plan.get("status"))
+
+
+def active_plans(plans):
+    """Filter plan records using the one lifecycle rule used by all adapters."""
+    if plans is None:
+        return []
+    values = plans.values() if isinstance(plans, dict) else plans
+    return [plan for plan in values if is_active_plan(plan)]
+
+
+def _record_value(record, *keys):
+    if not isinstance(record, dict):
+        return None
+    for key in keys:
+        value = record.get(key)
+        if value is not None and str(value).strip():
+            return value
+    return None
+
+
+def _canonical_context_text(value):
+    if value is None:
+        return None
+    text = " ".join(str(value).strip().split())
+    return text.casefold() if text else None
+
+
+def _as_calculation_date(value):
+    if isinstance(value, _datetime):
+        return value.date()
+    if isinstance(value, _date):
+        return value
+    if value is None:
+        return None
+    text = str(value).strip()
+    if not text:
+        return None
+    try:
+        return _date.fromisoformat(text[:10])
+    except ValueError:
+        return None
+
+
+def period_key(value):
+    """Canonical planning period.
+
+    Plan harvest dates are interpreted as half-year planning periods, so
+    2026-12-01 and 2026-H2 refer to the same declared 2026-H2 period.
+    Other labels remain exact, case-insensitive tokens; no fuzzy period
+    matching is performed.
+    """
+    parsed = _as_calculation_date(value)
+    if parsed is not None:
+        return f"{parsed.year:04d}-H{1 if parsed.month <= 6 else 2}"
+
+    if value is None:
+        return None
+    text = " ".join(str(value).strip().upper().split())
+    if not text:
+        return None
+    normalized = _re.sub(r"[._/\\s]+", "-", text)
+    normalized = _re.sub(r"-+", "-", normalized)
+    # Canonicalize compact half/quarter labels while preserving granularity.
+    match = _re.fullmatch(r"(\d{4})-?([HQ][1-4])", normalized)
+    if match:
+        return f"{match.group(1)}-{match.group(2)}"
+    return normalized
+
+
+def period_matches(reference_period, planning_period):
+    """Return True only when reference and plan periods are exactly applicable."""
+    left = period_key(reference_period)
+    right = period_key(planning_period)
+    return left is not None and right is not None and left == right
+
+
+def reference_context_key(reference):
+    """Return the versioning/matching scope for an evidence reference."""
+    return (
+        _canonical_context_text(
+            _record_value(reference, "org_id", "organization_id")
+        ),
+        _canonical_context_text(_record_value(reference, "crop_code", "crop")),
+        _canonical_context_text(
+            _record_value(reference, "geography", "coordination_scope")
+        ),
+        period_key(_record_value(reference, "period", "planning_period")),
+    )
+
+
+def reference_applies(
+    reference,
+    *,
+    organization_id,
+    crop_code,
+    geography,
+    planning_period,
+    calculation_date,
+    require_verified=True,
+):
+    """Check every production evidence predicate for one calculation date.
+
+    References must match organization, crop, geography, and period exactly.
+    They must be reviewed verified, in the verified review state, and valid
+    on the calculation date. Missing effective_from is intentionally rejected.
+    """
+    if not isinstance(reference, dict):
+        return False
+
+    ref_org, ref_crop, ref_geo, ref_period = reference_context_key(reference)
+    if ref_org != _canonical_context_text(organization_id):
+        return False
+    if ref_crop != _canonical_context_text(crop_code):
+        return False
+    if ref_geo != _canonical_context_text(geography):
+        return False
+    if ref_period != period_key(planning_period):
+        return False
+
+    reference_type = normalize_reference_type(
+        _record_value(reference, "reference_type")
+    )
+    verification = str(
+        _record_value(reference, "verification_status") or ""
+    ).strip()
+    review_state = str(
+        _record_value(reference, "review", "review_state") or ""
+    ).strip().casefold()
+    if require_verified and (
+        not is_eligible(reference_type, verification)
+        or review_state != "verified"
+    ):
+        return False
+
+    calculation_day = _as_calculation_date(calculation_date)
+    effective_from = _as_calculation_date(reference.get("effective_from"))
+    effective_to = _as_calculation_date(reference.get("effective_to"))
+    if calculation_day is None or effective_from is None:
+        return False
+    if effective_from > calculation_day:
+        return False
+    if effective_to is not None and calculation_day > effective_to:
+        return False
+    return True
+
+
+def select_eligible_reference(
+    references,
+    *,
+    organization_id,
+    crop_code,
+    geography,
+    planning_period,
+    calculation_date,
+):
+    """Select the newest eligible reference in one exact tenant/context scope."""
+    values = references.values() if isinstance(references, dict) else (references or [])
+    eligible = [
+        reference
+        for reference in values
+        if reference_applies(
+            reference,
+            organization_id=organization_id,
+            crop_code=crop_code,
+            geography=geography,
+            planning_period=planning_period,
+            calculation_date=calculation_date,
+        )
+    ]
+    eligible.sort(
+        key=lambda item: (
+            int(item.get("version", 0) or 0),
+            str(item.get("effective_from") or ""),
+            str(item.get("verified_at") or ""),
+            str(item.get("id") or ""),
+        ),
+        reverse=True,
+    )
+    return eligible[0] if eligible else None
+
+
+def next_reference_version(
+    references,
+    *,
+    organization_id,
+    crop_code,
+    geography,
+    planning_period,
+):
+    """Return the next version scoped to org/crop/geography/planning period."""
+    values = references.values() if isinstance(references, dict) else (references or [])
+    context = (
+        _canonical_context_text(organization_id),
+        _canonical_context_text(crop_code),
+        _canonical_context_text(geography),
+        period_key(planning_period),
+    )
+    versions = []
+    for reference in values:
+        if reference_context_key(reference) != context:
+            continue
+        try:
+            versions.append(int(reference.get("version", 0)))
+        except (TypeError, ValueError):
+            continue
+    return max(versions, default=0) + 1
+
+
+def transition_reference(
+    reference,
+    to_state,
+    *,
+    actor_user_id=None,
+    at=None,
+    note=None,
+):
+    """Apply one valid immutable-history transition and return the same record.
+
+    Review history entries are copied before append so prior entries cannot be
+    changed by a later transition. Invalid transitions raise ValueError.
+    """
+    if not isinstance(reference, dict):
+        raise ValueError("reference must be a record")
+    target = str(to_state).strip().casefold()
+    if target not in REVIEW_STATES:
+        raise ValueError(f"unknown reference review state: {to_state}")
+    current = str(reference.get("review") or "draft").strip().casefold()
+    if target not in REVIEW_TRANSITIONS.get(current, frozenset()):
+        raise ValueError(f"invalid reference transition: {current} -> {target}")
+
+    timestamp = at
+    if timestamp is None:
+        timestamp = _datetime.now(UTC).isoformat()
+    history = [
+        dict(entry) if isinstance(entry, dict) else {"value": entry}
+        for entry in (reference.get("review_history") or [])
+    ]
+    history.append(
+        {
+            "from": current,
+            "to": target,
+            "actor_user_id": actor_user_id,
+            "at": timestamp,
+            "note": note,
+        }
+    )
+    reference["review_history"] = history
+    reference["review"] = target
+    if target == "verified":
+        reference["verification_status"] = "reviewed_verified"
+        reference["reviewer_id"] = actor_user_id
+        reference["verified_at"] = timestamp
+    elif target == "rejected":
+        reference["verification_status"] = "user_provided_unverified"
+    elif target == "superseded":
+        reference["verification_status"] = "superseded"
+    elif target == "expired":
+        reference["verification_status"] = "stale"
+    return reference
+
+
+def classify_coordination_load(load, thresholds):
+    """Map a supply load to the API's coordination status using one policy."""
+    number = _finite_number(load, "supply load")
+    if number < 0:
+        raise ValueError("supply load cannot be negative")
+    if not isinstance(thresholds, dict):
+        raise ValueError("thresholds must be a mapping")
+    try:
+        elevated = _finite_number(
+            thresholds["elevated_load"], "elevated_load threshold"
+        )
+        high = _finite_number(thresholds["high_load"], "high_load threshold")
+    except (KeyError, TypeError) as error:
+        raise ValueError("thresholds must define elevated_load and high_load") from error
+    if elevated <= 0 or high <= elevated:
+        raise ValueError("high_load must exceed positive elevated_load")
+    if number >= high:
+        return "high_coordination_load"
+    if number >= elevated:
+        return "elevated_coordination_load"
+    return "within_reference"
+
+
+def reference_matches_calculation(
+    reference,
+    *,
+    organization_id,
+    crop_code,
+    geography,
+    harvest_period,
+    calculation_date,
+):
+    """Compatibility name for the API adapter's calculation lookup."""
+    return reference_applies(
+        reference,
+        organization_id=organization_id,
+        crop_code=crop_code,
+        geography=geography,
+        planning_period=harvest_period,
+        calculation_date=calculation_date,
+    )

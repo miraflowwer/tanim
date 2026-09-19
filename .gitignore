@@ -8,4 +8,14 @@ venv/
 .vercel/
 web/node_modules/
 web/dist/
+node_modules/
+app/dist/
+playwright/node_modules/
+dist/
 .DS_Store
+app/node_modules/
+playwright/test-results/
+playwright/playwright-report/
+test-results/
+coverage/
+*.log

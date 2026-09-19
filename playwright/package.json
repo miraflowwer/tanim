@@ -1,0 +1,15 @@
+{
+  "name": "tanim-playwright",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "test": "playwright test",
+    "list": "playwright test --list"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.9.1",
+    "@playwright/test": "^1.47.2",
+    "axe-core": "^4.10.0"
+  }
+}
