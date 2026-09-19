@@ -1,11 +1,14 @@
 # TANIM documentation
 
-Use this folder to understand the MVP rules, data coverage, and known limits.
+This folder explains the verified data coverage and the main MVP calculation.
 
-- [GRCI_SPEC.md](GRCI_SPEC.md): GRCI inputs, formulas, reference quality, result states, uncertainty, and fixed demo
-- [DATA_DICTIONARY.md](DATA_DICTIONARY.md): main source files, generated files, and important fields
-- [LIMITATIONS.md](LIMITATIONS.md): known source, geography, evidence, and MVP limits
+Start with these files:
+
+- [GRCI_SPEC.md](GRCI_SPEC.md): GRCI inputs, formulas, result states, uncertainty rules, and fixed demo fixture
+- [YIELD_REFERENCE.md](YIELD_REFERENCE.md): historical yield reference in plain language
 - [CROP_COVERAGE.md](CROP_COVERAGE.md): generated Explorer crop coverage summary
-- [VERIFIED_COVERAGE.md](VERIFIED_COVERAGE.md): audited Luzon source coverage
+- [VERIFIED_COVERAGE.md](VERIFIED_COVERAGE.md): audited Luzon data coverage and source limits
 
-For the raw dataset directory, see [../datasets/README.md](../datasets/README.md).
+Dataset-specific field definitions are in [DATA_DICTIONARY.md](DATA_DICTIONARY.md).
+
+Known source and data limits are in [LIMITATIONS.md](LIMITATIONS.md).

@@ -108,6 +108,12 @@ National utilization context produces neither state.
 
 If a range crosses two bands, the state is `borderline`.
 
+## Estimated range wording
+
+Farm-size margins are user estimates. TANIM labels values derived from them as an Estimated range. It does not call them confidence intervals.
+
+For example, 2.0 ha with a 0.2 ha margin is shown as `Estimated range: 1.8 ha to 2.2 ha`.
+
 ## Result status
 
 `status` describes what the engine could safely produce.
@@ -140,6 +146,8 @@ The baseline file states its reference type, geography, period, and synthetic st
 
 ## Output contract
 
-A result includes the plan context, planned-area range, reference yield and source, planned-supply range, reference amount and unit, reference type, geography, period, reference label, evidence note, reference quality, reference mode, supply-load range when allowed, calculation status, comparison state, risk state when allowed, uncertainty note, and source labels.
+A result includes the plan context, planned-area range, reference yield and source, planned-supply range, expected-production range, reference amount and unit, reference type, geography, period, reference label, evidence note, reference quality, reference mode, supply-load range when allowed, calculation status, comparison state, risk state when allowed, uncertainty state, uncertainty note, explanation, provenance, and source labels.
 
-The interface must show the reference label and evidence note. It must not infer stronger evidence than the result provides.
+`expected_production_range` is the same numeric range as planned supply. `uncertainty_state` is `point`, `range`, or `borderline` after area can be calculated. Provenance keeps the exact yield and comparison reference metadata used by the engine.
+
+The interface must show the reference label and evidence note. It must not infer stronger evidence than the result provides. Historical production remains a baseline, national utilization remains context only, and only committed local demand may use direct market-demand wording.

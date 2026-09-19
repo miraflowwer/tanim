@@ -5,7 +5,16 @@ The module follows docs/GRCI_SPEC.md. It does not use machine learning.
 Risk thresholds are supplied by the caller.
 """
 
+import csv
 import math
+import pathlib
+
+YIELD_SUMMARY_DEFAULT = (
+    pathlib.Path(__file__).resolve().parents[1]
+    / "datasets"
+    / "generated"
+    / "yield_summary.csv"
+)
 
 
 REFERENCE_TYPES = {
@@ -283,6 +292,78 @@ def classify_range(low, high, bands):
     return (low_band, high_band, low_band != high_band)
 
 
+def format_estimated_range(low, high, unit):
+    """Format a user-estimated range without implying statistical confidence."""
+    low_number = _finite_number(low, "range lower value")
+    high_number = _finite_number(high, "range upper value")
+    if low_number < 0 or high_number < 0:
+        raise ValueError("range values must be non-negative")
+    if high_number < low_number:
+        raise ValueError("range upper value must not be below the lower value")
+    unit_text = str(unit).strip()
+    if not unit_text:
+        raise ValueError("range unit must not be empty")
+    return f"Estimated range: {low_number:g} {unit_text} to {high_number:g} {unit_text}"
+
+
+def load_yield_summary(path=None):
+    """Load and strictly validate the generated yield summary."""
+    target = pathlib.Path(path) if path is not None else YIELD_SUMMARY_DEFAULT
+    with target.open(encoding="utf-8", newline="") as handle:
+        reader = csv.DictReader(handle)
+        required = {
+            "crop_id", "display_name", "region_id", "region_label",
+            "ref_period", "n_years", "avg_yield_mt_per_ha",
+            "min_yield_mt_per_ha", "max_yield_mt_per_ha",
+            "unit", "source_id", "data_status",
+        }
+        if set(reader.fieldnames or []) != required:
+            raise ValueError("yield summary schema is not the expected TANIM schema")
+        rows = list(reader)
+
+    index = {}
+    for row in rows:
+        key = (row["crop_id"].strip(), row["region_id"].strip())
+        if not all(key):
+            raise ValueError("yield summary crop_id and region_id must not be empty")
+        if key in index:
+            raise ValueError(f"duplicate yield summary row for {key}")
+        n_years = int(row["n_years"])
+        avg = _finite_number(row["avg_yield_mt_per_ha"], "average yield")
+        minimum = _finite_number(row["min_yield_mt_per_ha"], "minimum yield")
+        maximum = _finite_number(row["max_yield_mt_per_ha"], "maximum yield")
+        if n_years <= 0 or minimum < 0 or avg < 0 or maximum < 0:
+            raise ValueError(f"invalid yield summary values for {key}")
+        if not minimum <= avg <= maximum:
+            raise ValueError(f"yield summary range is inconsistent for {key}")
+        if row["unit"] != "mt_per_ha":
+            raise ValueError(f"unexpected yield unit for {key}")
+        index[key] = {
+            "crop_id": key[0], "display_name": row["display_name"],
+            "region_id": key[1], "region_label": row["region_label"],
+            "ref_period": row["ref_period"], "n_years": n_years,
+            "avg_yield_mt_per_ha": avg,
+            "min_yield_mt_per_ha": minimum,
+            "max_yield_mt_per_ha": maximum,
+            "unit": row["unit"], "source_id": row["source_id"],
+            "data_status": row["data_status"],
+        }
+    return index
+
+
+def reference_yield_for(index, crop_id, region_id):
+    """Return one crop-region yield record, or None when unavailable."""
+    if not isinstance(index, dict):
+        raise ValueError("yield summary index must be a dict")
+    return index.get((str(crop_id).strip(), str(region_id).strip()))
+
+
+def _describe_amount(low, high, unit):
+    if low == high:
+        return f"{low:g} {unit}"
+    return f"{low:g} to {high:g} {unit}"
+
+
 def is_planning_supported(crop_record):
     """Check whether a crop record is safe for planning calculations."""
     if not isinstance(crop_record, dict):
@@ -307,6 +388,7 @@ def _result_base(crop, location, harvest_period):
         "reference_yield": None,
         "yield_source": None,
         "planned_supply_range": None,
+        "expected_production_range": None,
         "reference_amount": None,
         "reference_unit": None,
         "reference_type": None,
@@ -325,7 +407,10 @@ def _result_base(crop, location, harvest_period):
         "risk_state": None,
         "risk_band_range": None,
         "borderline": False,
+        "uncertainty_state": None,
         "uncertainty_note": None,
+        "explanation": None,
+        "provenance": None,
         "source_labels": [],
     }
 
@@ -346,6 +431,7 @@ def compute_grci(
     crop_record,
     bands=None,
     source_labels=None,
+    yield_record=None,
 ):
     """Compute one reproducible GRCI result."""
     result = _result_base(crop, location, harvest_period)
@@ -369,6 +455,17 @@ def compute_grci(
         else None
     )
     result["source_labels"] = normalize_source_labels(source_labels)
+    result["provenance"] = {
+        "yield_source": yield_source,
+        "yield_ref_period": yield_record.get("ref_period") if isinstance(yield_record, dict) else None,
+        "yield_unit": yield_record.get("unit") if isinstance(yield_record, dict) else None,
+        "reference_type": result["reference_type"],
+        "reference_amount": reference_amount,
+        "reference_unit": result["reference_unit"],
+        "reference_geography": result["reference_geography"],
+        "reference_period": result["reference_period"],
+        "source_labels": list(result["source_labels"]),
+    }
 
     if crop is None or not str(crop).strip():
         result["status"] = "incomplete"
@@ -433,6 +530,12 @@ def compute_grci(
     result["market_demand_wording_allowed"] = metadata[
         "market_demand_wording_allowed"
     ]
+    result["provenance"].update({
+        "reference_label": metadata["label"],
+        "reference_quality": metadata["quality"],
+        "reference_scope": metadata["scope"],
+        "reference_mode": metadata["comparison_mode"],
+    })
 
     if result["reference_unit"] != "MT":
         result["status"] = "invalid"
@@ -475,6 +578,7 @@ def compute_grci(
         return result
 
     result["planned_area_range"] = [area_low, area_high]
+    result["uncertainty_state"] = "point" if area_low == area_high else "range"
 
     if reference_yield is None:
         result["status"] = "incomplete"
@@ -502,6 +606,7 @@ def compute_grci(
 
     supply = planned_supply_range(area_low, area_high, yield_value)
     result["planned_supply_range"] = list(supply)
+    result["expected_production_range"] = list(supply)
 
     if reference_amount is None:
         result["status"] = "incomplete"
@@ -528,6 +633,12 @@ def compute_grci(
             "This reference is context only. TANIM does not compare local "
             "planned supply with a national utilization amount."
         )
+        result["explanation"] = (
+            f"Planned area is {_describe_amount(area_low, area_high, 'ha')}. "
+            f"At {yield_value:g} MT per ha, expected production is "
+            f"{_describe_amount(supply[0], supply[1], 'MT')}. "
+            "The national utilization value is context only and is not used as local demand."
+        )
         return result
 
     load = supply_load_range(supply[0], supply[1], reference_value)
@@ -538,6 +649,11 @@ def compute_grci(
         result["uncertainty_note"] = (
             "Risk bands are not configured. Supply load is available but "
             "has no comparison label."
+        )
+        result["explanation"] = (
+            f"Expected production is {_describe_amount(supply[0], supply[1], 'MT')}. "
+            f"The comparison ratio is {_describe_amount(load[0], load[1], 'ratio')}. "
+            "No comparison band is shown because bands are not configured."
         )
         return result
 
@@ -559,6 +675,14 @@ def compute_grci(
             result["uncertainty_note"] = (
                 "Farm size is approximate, so the baseline comparison is a range."
             )
+        if borderline:
+            result["uncertainty_state"] = "borderline"
+        result["explanation"] = (
+            f"Expected production is {_describe_amount(supply[0], supply[1], 'MT')}. "
+            f"Compared with {result['reference_label']}, the baseline ratio is "
+            f"{_describe_amount(load[0], load[1], 'ratio')}. "
+            f"Comparison state is {state}. This is not a market-demand risk result."
+        )
         return result
 
     result["status"] = "ok"
@@ -566,6 +690,7 @@ def compute_grci(
     result["risk_band_range"] = [low_band, high_band]
 
     if borderline:
+        result["uncertainty_state"] = "borderline"
         result["uncertainty_note"] = (
             f"Supply load spans {low_band} to {high_band}. The farm-size "
             "estimate can change the final band."
@@ -575,4 +700,10 @@ def compute_grci(
             "Farm size is approximate, so supply load is shown as a range."
         )
 
+    result["explanation"] = (
+        f"Expected production is {_describe_amount(supply[0], supply[1], 'MT')}. "
+        f"Compared with {result['reference_label']}, the supply-load ratio is "
+        f"{_describe_amount(load[0], load[1], 'ratio')}. "
+        f"Risk state is {state}."
+    )
     return result
