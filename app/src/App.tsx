@@ -144,6 +144,7 @@ export default function App() {
         bottomNav={farmerNav ? <FarmerBottomNav items={FARMER_NAVIGATION} current={route} /> : undefined}>
         {route === "overview" && <Overview />}
         {route === "plans" && !farmerNav && <PlansList plans={plans} />}
+        {route === "profile" && <Profile />}
         {route === "crop" && cropEntry && (
           <CropDetail cropCode={cropEntry.code} cropName={cropEntry.name}
             prices={prices} climate={climate} />
