@@ -644,7 +644,7 @@ def run_ingestion(payload: IngestionPayload, request: Request, user: ProductionU
         return {"run": final_run, "version": version, "stages": STAGES, "validation": result.summary, "promoted": promoted}
     result = run_platform(action, user=user)
     if result.get("run", {}).get("error_code") == "ingestion_validation_failed":
-        return JSONResponse({"code": "ingestion_validation_failed", "message": "The source payload was rejected and the promoted version was unchanged.", "request_id": request_id(request), "details": result}, status_code=422
+        return JSONResponse({"code": "ingestion_validation_failed", "message": "The source payload was rejected and the promoted version was unchanged.", "request_id": request_id(request), "details": result}, status_code=422)
     return result
 
 @app.get("/api/v1/platform/ingestion")

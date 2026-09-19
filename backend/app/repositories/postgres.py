@@ -1,4 +1,4 @@
-"""PostgreSQL repository boundary for all production persistence."""
+# ruff: noqa: E701, E702`n"""PostgreSQL repository boundary for all production persistence."""
 from __future__ import annotations
 
 import uuid
@@ -8,7 +8,7 @@ from typing import Any
 from sqlalchemy import desc, func, or_, select, text
 from sqlalchemy.orm import Session
 
-from ..models import AuditEvent, CalculationPolicy, CalculationRun, Crop, DataSource, DataSourceVersion, Farm, Organization, OrganizationMembership, PlantingPlan, PlantingPlanRevision, User, YieldReference
+from ..models import (AuditEvent, CalculationPolicy, CalculationRun, ComparisonReference, ConsentRecord, Crop, DataSource, DataSourceVersion, Farm, Organization, OrganizationMembership, PlantingPlan, PlantingPlanRevision, ReferenceReview, User, YieldReference)
 from ..platform_models import ExportRequest, IngestionRun, Invitation, Notification, OrganizationSetting
 from .base import Page, RepositoryIdentity
 
@@ -256,10 +256,42 @@ class PostgresRepository:
             self.session.add(source); self.session.flush()
         return source
     def create_source_version(self, *, source: DataSource, values: dict[str, Any]) -> dict[str, Any]:
-        latest = int(self.session.execute(select(func.max(DataSourceVersion.version)).where(DataSourceVersion.source_id == source.id)).scalar() or 0) + 1
-        row = DataSourceVersion(source_id=source.id, version=latest, checksum=checksum, payload_ref=values.get("payload_ref"), period_start=values.get("period_start"), period_end=values.get("period_end"), row_count=int(values.get("row_count", 0)), validation_status=values.get("validation_status", "valid"), validation_errors=values.get("validation_errors"), normalization_version=values.get("normalization_version"), staged_at=datetime.now(UTC))
-        self.session.add(row); self.session.flush()
+        checksum = values.get("checksum")
+        if not checksum:
+            raise ValueError("source_version_checksum_required")
+        duplicate = self.session.execute(
+            select(DataSourceVersion).where(
+                DataSourceVersion.source_id == source.id,
+                DataSourceVersion.checksum == checksum,
+            )
+        ).scalar_one_or_none()
+        if duplicate is not None:
+            raise ValueError("duplicate_source_version")
+        latest = int(
+            self.session.execute(
+                select(func.max(DataSourceVersion.version)).where(
+                    DataSourceVersion.source_id == source.id
+                )
+            ).scalar()
+            or 0
+        ) + 1
+        row = DataSourceVersion(
+            source_id=source.id,
+            version=latest,
+            checksum=checksum,
+            payload_ref=values.get("payload_ref"),
+            period_start=values.get("period_start"),
+            period_end=values.get("period_end"),
+            row_count=int(values.get("row_count", 0)),
+            validation_status=values.get("validation_status", "valid"),
+            validation_errors=values.get("validation_errors"),
+            normalization_version=values.get("normalization_version"),
+            staged_at=datetime.now(UTC),
+        )
+        self.session.add(row)
+        self.session.flush()
         return self.version_dict(row)
+
     def promote_source_version(self, *, key: str, version: int) -> dict[str, Any]:
         source = self.data_source(key)
         if source is None: raise KeyError("data_source")

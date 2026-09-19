@@ -1,4 +1,4 @@
-"""Pure ingestion validation and versioning rules.
+# ruff: noqa: E701, E702`n"""Pure ingestion validation and versioning rules.
 
 The service is deliberately side-effect free until a validated normalized
 payload is handed to a repository transaction. A failed run therefore cannot

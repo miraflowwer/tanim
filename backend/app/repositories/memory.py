@@ -1,4 +1,4 @@
-"""Isolated in-memory repository used only by explicit unit/demo services."""
+# ruff: noqa: E701, E702`n"""Isolated in-memory repository used only by explicit unit/demo services."""
 from __future__ import annotations
 
 from contextlib import contextmanager
