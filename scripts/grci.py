@@ -10,6 +10,83 @@ product thresholds in this module.
 import math
 
 
+REFERENCE_TYPES = {
+    "local_committed_demand": {
+        "label": "Local committed demand",
+        "evidence_note": (
+            "Compared against local committed buyer, cooperative, or LGU "
+            "demand for this crop and period."
+        ),
+        "is_market_demand": True,
+    },
+    "local_historical_absorption": {
+        "label": "Local historical absorption",
+        "evidence_note": (
+            "Compared against past local sold or accepted volume. "
+            "This is not a forward demand commitment."
+        ),
+        "is_market_demand": True,
+    },
+    "national_utilization_context": {
+        "label": "National utilization context (not Luzon demand)",
+        "evidence_note": (
+            "PSA Supply Utilization Accounts are national context. "
+            "This is not Luzon demand."
+        ),
+        "is_market_demand": False,
+    },
+    "historical_production_baseline": {
+        "label": "Historical production baseline (not market demand)",
+        "evidence_note": (
+            "Compared against historical production only. "
+            "This is not market demand."
+        ),
+        "is_market_demand": False,
+    },
+    "demo_coordination_baseline": {
+        "label": "Demo coordination baseline (not market demand)",
+        "evidence_note": (
+            "Synthetic DEMO-2026 baseline for reproducibility. "
+            "This is not observed local market demand."
+        ),
+        "is_market_demand": False,
+    },
+}
+
+
+def normalize_reference_type(value):
+    """Return the canonical reference type string, or None when missing."""
+    if value is None:
+        return None
+    text = str(value).strip()
+    if not text:
+        return None
+    return text
+
+
+def describe_reference(reference_type):
+    """Return the display label and evidence note for a reference type."""
+    canonical = normalize_reference_type(reference_type)
+    if canonical is None:
+        return (None, None)
+    record = REFERENCE_TYPES.get(canonical)
+    if record is None:
+        return (None, None)
+    return (record["label"], record["evidence_note"])
+
+
+def is_market_demand_reference(reference_type):
+    """Return True only for references that may be called market demand."""
+    canonical = normalize_reference_type(reference_type)
+    record = REFERENCE_TYPES.get(canonical) if canonical else None
+    return bool(record and record["is_market_demand"])
+
+
+def valid_reference_types():
+    """Return the sorted list of accepted reference type strings."""
+    return sorted(REFERENCE_TYPES)
+
+
 def _finite_number(value, name):
     try:
         number = float(value)
@@ -168,6 +245,8 @@ def _result_base(crop, location, harvest_period):
         "planned_supply_range": None,
         "reference_amount": None,
         "reference_type": None,
+        "reference_label": None,
+        "reference_evidence_note": None,
         "supply_load_range": None,
         "status": "unclassified",
         "risk_state": None,
@@ -197,12 +276,15 @@ def compute_grci(
     Expected user or data problems return a result with a clear status.
     Malformed risk-band configuration raises ValueError because it is a
     programming or configuration error.
+    Reference quality is explicit: reference_type must be one of
+    valid_reference_types(). Historical production must never be labelled
+    as market demand; use describe_reference() for user wording.
     """
     result = _result_base(crop, location, harvest_period)
     result["reference_yield"] = reference_yield
     result["yield_source"] = yield_source
     result["reference_amount"] = reference_amount
-    result["reference_type"] = reference_type
+    result["reference_type"] = normalize_reference_type(reference_type)
     result["source_labels"] = list(source_labels) if source_labels else []
 
     if crop is None or not str(crop).strip():
@@ -288,10 +370,24 @@ def compute_grci(
         result["uncertainty_note"] = "Reference amount must be greater than zero."
         return result
 
-    if reference_type is None or not str(reference_type).strip():
+    canonical_reference = normalize_reference_type(reference_type)
+    if canonical_reference is None:
         result["status"] = "incomplete"
         result["uncertainty_note"] = "Missing reference type."
         return result
+
+    if canonical_reference not in REFERENCE_TYPES:
+        result["status"] = "incomplete"
+        result["uncertainty_note"] = (
+            "Unknown reference type. Expected one of: "
+            + ", ".join(valid_reference_types())
+            + "."
+        )
+        return result
+
+    label, evidence_note = describe_reference(canonical_reference)
+    result["reference_label"] = label
+    result["reference_evidence_note"] = evidence_note
 
     load = supply_load_range(supply[0], supply[1], reference_value)
     result["supply_load_range"] = list(load)

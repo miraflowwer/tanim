@@ -62,7 +62,7 @@ def demo_result(grci, crop_id):
         reference_yield=float(demand["demo_yield_mt_per_ha"]),
         yield_source="DEMO-2026 synthetic yield",
         reference_amount=float(demand["demo_qty_mt"]),
-        reference_type="demo_market_absorption_proxy",
+        reference_type="demo_coordination_baseline",
         crop_record=supported_crop_record(),
         bands=TEST_BANDS,
         source_labels=[demand["source_id"]],
@@ -119,7 +119,10 @@ def test_demo_fixture_is_reproducible_and_labelled():
     assert eggplant["borderline"] is False
 
     for result in (tomato, eggplant):
-        assert result["reference_type"] == "demo_market_absorption_proxy"
+        assert result["reference_type"] == "demo_coordination_baseline"
+        assert result["reference_label"] == "Demo coordination baseline (not market demand)"
+        assert "not observed local market demand" in result["reference_evidence_note"]
+        assert "market demand" not in result["reference_label"].lower().replace("not market demand", "")
         assert result["source_labels"] == ["DEMO-2026"]
 
     assert demo_result(grci, "tomato") == tomato
@@ -150,7 +153,7 @@ def test_approximate_farm_area_produces_range():
         reference_yield=15.0,
         yield_source="test source",
         reference_amount=300.0,
-        reference_type="test_reference",
+        reference_type="local_committed_demand",
         crop_record=supported_crop_record(),
         bands=TEST_BANDS,
         source_labels=["TEST"],
@@ -175,7 +178,7 @@ def test_missing_reference_yield_is_incomplete():
         reference_yield=None,
         yield_source=None,
         reference_amount=375.0,
-        reference_type="test_reference",
+        reference_type="local_committed_demand",
         crop_record=supported_crop_record(),
         bands=TEST_BANDS,
         source_labels=["TEST"],
@@ -204,7 +207,7 @@ def test_unsupported_or_missing_crop_registry_record():
             reference_yield=12.0,
             yield_source="test source",
             reference_amount=180.0,
-            reference_type="test_reference",
+            reference_type="local_committed_demand",
             crop_record=crop_record,
             bands=TEST_BANDS,
             source_labels=["TEST"],
@@ -235,7 +238,7 @@ def test_missing_location_or_harvest_period():
             reference_yield=15.0,
             yield_source="test source",
             reference_amount=375.0,
-            reference_type="test_reference",
+            reference_type="local_committed_demand",
             crop_record=supported_crop_record(),
             bands=TEST_BANDS,
             source_labels=["TEST"],
@@ -257,7 +260,7 @@ def test_zero_reference_amount_is_invalid():
         reference_yield=15.0,
         yield_source="test source",
         reference_amount=0,
-        reference_type="test_reference",
+        reference_type="local_committed_demand",
         crop_record=supported_crop_record(),
         bands=TEST_BANDS,
         source_labels=["TEST"],
@@ -285,7 +288,7 @@ def test_invalid_farm_area_returns_invalid_result():
             reference_yield=15.0,
             yield_source="test source",
             reference_amount=375.0,
-            reference_type="test_reference",
+            reference_type="local_committed_demand",
             crop_record=supported_crop_record(),
             bands=TEST_BANDS,
             source_labels=["TEST"],
@@ -305,7 +308,7 @@ def test_grci_range_crossing_risk_boundary():
         reference_yield=10.0,
         yield_source="test source",
         reference_amount=100.0,
-        reference_type="test_reference",
+        reference_type="local_committed_demand",
         crop_record=supported_crop_record(),
         bands=TEST_BANDS,
         source_labels=["TEST"],
@@ -319,6 +322,123 @@ def test_grci_range_crossing_risk_boundary():
     assert result["risk_state"] == "borderline"
     assert result["risk_band_range"] == ["low", "watch"]
     assert result["borderline"] is True
+
+
+def test_reference_quality_labels_change_with_evidence():
+    grci = load_grci()
+
+    assert set(grci.valid_reference_types()) == {
+        "local_committed_demand",
+        "local_historical_absorption",
+        "national_utilization_context",
+        "historical_production_baseline",
+        "demo_coordination_baseline",
+    }
+
+    labels = {
+        reference: grci.describe_reference(reference)
+        for reference in grci.valid_reference_types()
+    }
+    assert labels["local_committed_demand"][0] == "Local committed demand"
+    assert labels["local_historical_absorption"][0] == "Local historical absorption"
+    assert labels["national_utilization_context"][0] == (
+        "National utilization context (not Luzon demand)"
+    )
+    assert labels["historical_production_baseline"][0] == (
+        "Historical production baseline (not market demand)"
+    )
+    assert labels["demo_coordination_baseline"][0] == (
+        "Demo coordination baseline (not market demand)"
+    )
+
+    assert grci.is_market_demand_reference("local_committed_demand") is True
+    assert grci.is_market_demand_reference("local_historical_absorption") is True
+    assert grci.is_market_demand_reference("national_utilization_context") is False
+    assert grci.is_market_demand_reference("historical_production_baseline") is False
+    assert grci.is_market_demand_reference("demo_coordination_baseline") is False
+
+    for reference in (
+        "national_utilization_context",
+        "historical_production_baseline",
+        "demo_coordination_baseline",
+    ):
+        label, note = labels[reference]
+        assert "not " in label.lower() or "not " in note.lower()
+        bare_label = label.lower().replace("(not market demand)", "").replace(
+            "(not luzon demand)", ""
+        )
+        assert "market demand" not in bare_label
+
+
+def test_historical_production_is_never_market_demand():
+    grci = load_grci()
+    result = grci.compute_grci(
+        crop="tomato",
+        location="Tanauan, Batangas",
+        harvest_period="2026-12",
+        plans=[{"farm_size_ha": 10.0, "farm_size_margin_ha": 0.0}],
+        reference_yield=15.0,
+        yield_source="test source",
+        reference_amount=300.0,
+        reference_type="historical_production_baseline",
+        crop_record=supported_crop_record(),
+        bands=TEST_BANDS,
+        source_labels=["TEST"],
+    )
+
+    assert result["status"] == "ok"
+    assert result["reference_type"] == "historical_production_baseline"
+    assert result["reference_label"] == (
+        "Historical production baseline (not market demand)"
+    )
+    assert "not market demand" in result["reference_evidence_note"].lower()
+    assert "luzon demand" not in result["reference_evidence_note"].lower()
+
+
+def test_national_utilization_is_not_luzon_demand():
+    grci = load_grci()
+    result = grci.compute_grci(
+        crop="tomato",
+        location="Tanauan, Batangas",
+        harvest_period="2026-12",
+        plans=[{"farm_size_ha": 10.0, "farm_size_margin_ha": 0.0}],
+        reference_yield=15.0,
+        yield_source="test source",
+        reference_amount=300.0,
+        reference_type="national_utilization_context",
+        crop_record=supported_crop_record(),
+        bands=TEST_BANDS,
+        source_labels=["TEST"],
+    )
+
+    assert result["status"] == "ok"
+    assert result["reference_label"] == (
+        "National utilization context (not Luzon demand)"
+    )
+    assert "not luzon demand" in result["reference_evidence_note"].lower()
+
+
+def test_unknown_reference_type_is_incomplete():
+    grci = load_grci()
+    for bad_type in ("test_reference", "demo_market_absorption_proxy", "  "):
+        result = grci.compute_grci(
+            crop="tomato",
+            location="Tanauan, Batangas",
+            harvest_period="2026-12",
+            plans=[{"farm_size_ha": 10.0, "farm_size_margin_ha": 0.0}],
+            reference_yield=15.0,
+            yield_source="test source",
+            reference_amount=375.0,
+            reference_type=bad_type,
+            crop_record=supported_crop_record(),
+            bands=TEST_BANDS,
+            source_labels=["TEST"],
+        )
+        assert result["status"] == "incomplete"
+        assert result["risk_state"] is None
+        assert result["supply_load_range"] is None
+        assert result["reference_label"] is None
+        assert result["reference_evidence_note"] is None
 
 
 def test_risk_band_configuration_is_strict():

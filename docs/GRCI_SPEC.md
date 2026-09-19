@@ -88,18 +88,22 @@ Data quality and risk level are separate.
 
 ## Reference quality
 
-The GRCI result must state which reference it uses.
+The GRCI result must state which reference it uses. The engine accepts only these reference types, defined in scripts/grci.py as REFERENCE_TYPES:
 
-Preferred reference order is:
+1. local_committed_demand: committed buyer, cooperative, or LGU demand for the crop and period. User label: Local committed demand. This is market demand.
+2. local_historical_absorption: local historical sold or accepted volume. User label: Local historical absorption. This is market demand history, not a forward commitment.
+3. national_utilization_context: broader official utilization data used only with its real geographic scope. User label: National utilization context (not Luzon demand). This is not Luzon demand.
+4. historical_production_baseline: historical production used as a coordination baseline. User label: Historical production baseline (not market demand). This is never market demand.
+5. demo_coordination_baseline: synthetic demo baseline. User label: Demo coordination baseline (not market demand). This is never market demand.
 
-1. committed buyer, cooperative, or LGU demand for the crop and period
-2. local historical sold or accepted volume
-3. broader official utilization data used only with its real geographic scope
-4. historical production used as a coordination baseline, not as market demand
+Preferred evidence order is local_committed_demand, then local_historical_absorption, then national_utilization_context, then historical_production_baseline. We still do not have verified Luzon-local market demand for every crop, so callers must select the tier that matches the evidence.
 
-A production baseline must not be presented as verified market demand.
+Rules:
 
-PSA Supply Utilization Accounts remain national context. They must not be presented as Luzon demand.
+- Historical production must never be labelled as market demand in code, docs, or UI. Use describe_reference() for user wording.
+- Only local_committed_demand and local_historical_absorption may use the words market demand. The other three tiers must use their not-demand labels.
+- PSA Supply Utilization Accounts remain national context. They must use national_utilization_context and must not be presented as Luzon demand.
+- An unknown or missing reference type returns incomplete. Supply load is not calculated for display until the tier is known.
 
 ## Fixed demo fixture
 
@@ -113,10 +117,10 @@ With the test-only bands above, tomato is high and eggplant is low.
 
 The plan rows come from [../datasets/demo_farm_plans.csv](../datasets/demo_farm_plans.csv). The reference rows come from [../datasets/demo_demand_proxy.csv](../datasets/demo_demand_proxy.csv).
 
-Both files are marked as demo data. The 375 MT and 180 MT values are not observed local market demand and must not be presented that way.
+Both files are marked as demo data. The 375 MT and 180 MT values use reference type demo_coordination_baseline. They are not observed local market demand and must not be presented that way. The demo user label is Demo coordination baseline (not market demand).
 
 ## Output contract
 
-A GRCI result includes crop, location, harvest period, planned-area range, reference yield and source, planned-supply range, reference amount and type, supply-load range, calculation status, risk state, risk-band range, uncertainty note, and source labels.
+A GRCI result includes crop, location, harvest period, planned-area range, reference yield and source, planned-supply range, reference amount and type, reference label and evidence note, supply-load range, calculation status, risk state, risk-band range, uncertainty note, and source labels.
 
-The result must be reproducible from the stored inputs and source data.
+The interface must show reference_label and reference_evidence_note, not only the raw reference_type code. The result must be reproducible from the stored inputs and source data.

@@ -82,3 +82,9 @@ The fixed demo uses tomato and eggplant synthetic plans. The demo files do not d
 In `demo_farm_plans.csv`, `farm_size_ha` is the estimated area and `farm_size_margin_ha` is the plus-or-minus margin in hectares.
 
 The synthetic demo uses a margin of 0.0 ha so its fixed scenario stays reproducible. Real user plans should carry a margin when the entered farm size is only an estimate.
+
+In `demo_demand_proxy.csv`, `demo_qty_mt` is a demo coordination baseline, not observed local market demand. GRCI callers must use reference type `demo_coordination_baseline` for these rows.
+
+## grci reference types
+
+GRCI `reference_type` must be one of `local_committed_demand`, `local_historical_absorption`, `national_utilization_context`, `historical_production_baseline`, or `demo_coordination_baseline`. Only the first two may be described as market demand. Historical production must use `historical_production_baseline` and national SUA must use `national_utilization_context`. User wording comes from `describe_reference()` in `scripts/grci.py` and is recorded as `reference_label` and `reference_evidence_note`.

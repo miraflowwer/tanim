@@ -10,7 +10,9 @@
 - Farmgate and retail source rows can be blank when a commodity was not observed in a place or period. TANIM must keep those values missing.
 - Some crop-production tables do not publish NCR. TANIM must not invent an NCR production value.
 - DA weekly price monitoring is NCR-only. It is not a substitute for Luzon-wide price coverage.
-- Supply Utilization Accounts are national. They are contextual demand and utilization evidence, not a Luzon demand estimate.
+- Supply Utilization Accounts are national. They are national utilization context, not a Luzon demand estimate. GRCI must label them as national utilization context, never as Luzon demand.
+- Verified Luzon-local market demand is not available for every crop. GRCI callers must select the reference tier that matches the evidence: local committed demand, local historical absorption, national utilization context, or historical production baseline.
+- Historical production is a coordination baseline only. It must never be labelled as market demand.
 - A farmer-entered farm size can be approximate. GRCI calculations should carry an area range using the stated margin instead of treating the estimate as exact.
 - TANIM does not set a default real-world farm-size margin yet. A default needs pilot evidence. The fixed synthetic demo uses a zero margin only to keep the demo reproducible.
 - PAGASA outlook statements can change with later advisories.
