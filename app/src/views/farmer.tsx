@@ -48,13 +48,17 @@ export interface FarmerCtx {
 
 export function Home({ plans }: { plans: Plan[] }) {
   const mine = plans.filter((p) => p.state === "Planned" || p.state === "Draft");
+  const upcoming = [...plans]
+    .filter((p) => p.state === "Planned")
+    .sort((a, b) => a.harvestPeriod.localeCompare(b.harvestPeriod))
+    .slice(0, 3);
   return (
     <section aria-labelledby="home-h">
       <h2 id="home-h">What needs your attention?</h2>
       <p className="hint">{ORG_NAME} · {ORG_SCOPE}</p>
-      <p><Button onClick={() => (location.hash = "#/new")}>Create planting plan</Button></p>
+      <p><Button onClick={() => (location.hash = "#/plans/new")}>Create planting plan</Button></p>
       {mine.length === 0 ? (
-        <EmptyState title={EMPTY_HOME} actionLabel="Create planting plan" onAction={() => (location.hash = "#/new")} />
+        <EmptyState title={EMPTY_HOME} actionLabel="Create planting plan" onAction={() => (location.hash = "#/plans/new")} />
       ) : (
         <ul className="cards">
           {mine.map((p) => (
@@ -70,6 +74,21 @@ export function Home({ plans }: { plans: Plan[] }) {
           ))}
         </ul>
       )}
+      <section aria-labelledby="upcoming-h">
+        <h3 id="upcoming-h">Upcoming harvest</h3>
+        {upcoming.length === 0 ? <p className="hint">No planned harvests yet.</p> : (
+          <ul className="cards">
+            {upcoming.map((p) => (
+              <li key={p.id}>
+                <Card title={`${p.crop} · ${p.harvestPeriod}`}>
+                  <p>{p.areaHa} ha · {p.farm}</p>
+                  <p><a href={`#/plans/${p.id}`}>Open plan</a></p>
+                </Card>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
       <p className="hint">Your group sees totals, not your private details, unless you allow it.</p>
     </section>
   );
@@ -391,11 +410,38 @@ export function AdjustView({ plan, onUpdatePlan }: { plan: Plan; onUpdatePlan: F
 const GROUPS: Plan["state"][] = ["Draft", "Planned", "Harvested", "Cancelled"];
 
 export function MyPlans({ plans }: { plans: Plan[] }) {
+  const [search, setSearch] = useState("");
+  const [crop, setCrop] = useState("");
+  const [status, setStatus] = useState("");
+  const query = search.trim().toLowerCase();
+  const activeFilters = [crop, status, query].filter(Boolean).length;
+  const filtered = plans.filter((p) => {
+    if (crop && p.cropCode !== crop) return false;
+    if (status && p.state !== status) return false;
+    if (query && !`${p.crop} ${p.farm} ${p.harvestPeriod}`.toLowerCase().includes(query)) return false;
+    return true;
+  });
   return (
     <section aria-labelledby="my-h">
       <h2 id="my-h">My Plans</h2>
+      <p><Button onClick={() => (location.hash = "#/plans/new")}>New planting plan</Button></p>
+      <form role="search" aria-label="Filter plans" onSubmit={(e) => e.preventDefault()}>
+        <TextField name="plan-search" label="Search plans" placeholder="Crop, farm, or harvest period"
+          value={search} onChange={(e) => setSearch(e.target.value)} />
+        <div className="row">
+          <Select name="crop" label="Crop" options={["", ...CROPS.map((c) => c.code)]} value={crop}
+            onChange={(e) => setCrop(e.target.value)} />
+          <Select name="status" label="Status" options={["", ...GROUPS]} value={status}
+            onChange={(e) => setStatus(e.target.value)} />
+        </div>
+        <p className="hint">
+          {activeFilters > 0 ? `${activeFilters} filter${activeFilters > 1 ? "s" : ""} active. ` : ""}
+          {activeFilters > 0 && <button type="button" className="linklike" onClick={() => { setSearch(""); setCrop(""); setStatus(""); }}>Clear filters</button>}
+        </p>
+      </form>
       {GROUPS.map((group) => {
-        const items = plans.filter((p) => p.state === group);
+        const items = filtered.filter((p) => p.state === group);
+        if (status && group !== status) return null;
         return (
           <section key={group} aria-labelledby={`my-${group}`}>
             <h3 id={`my-${group}`}>{group}</h3>

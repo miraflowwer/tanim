@@ -1,14 +1,22 @@
-/* TANIM P0 — mobile-first, single column (§§22-25). */
+/* TANIM M1 — design tokens (§04) + mobile-first single column (§03). */
 :root {
   --brand: #1b6b3a;
-  --ink: #1a1a1a;
-  --muted: #5a5a5a;
+  --brand-strong: #14542d;
+  --brand-blue: #1f5eaa;
+  --brand-red: #b33a3a;
+  --brand-yellow: #c79518;
+  --ink: #1a1d1a;
+  --muted: #5d665f;
   --surface: #ffffff;
-  --bg: #f4f5f3;
-  --line: #d8dcd8;
+  --surface-subtle: #f9faf8;
+  --bg: #f5f6f3;
+  --line: #d9ded9;
   --warn: #8a5a00;
   --danger: #a4262c;
+  --info: #245a92;
   --focus: #0b5fff;
+  --radius: 12px;
+  --sat-bottom: env(safe-area-inset-bottom, 0px);
 }
 * { box-sizing: border-box; }
 body {
@@ -92,4 +100,53 @@ footer select { width: auto; min-height: 44px; }
 main a, footer a { display: inline-flex; align-items: center; min-height: 44px; min-width: 44px; }
 @media (max-width: 640px) {
   .tabs { flex-wrap: wrap; overflow-x: visible; }
+}
+
+/* M1 shell: sidebar on desktop, bottom nav + drawer on phones (§§02-03). */
+.shell { display: grid; grid-template-columns: 240px 1fr; gap: 16px; align-items: start; }
+.sidenav { background: var(--surface); border-radius: var(--radius); padding: 12px; position: sticky; top: 12px; }
+.sidenav ul { list-style: none; margin: 0; padding: 0; }
+.sidenav a { display: flex; align-items: center; min-height: 44px; padding: 10px 12px; border-radius: 8px; color: var(--ink); text-decoration: none; }
+.sidenav a[aria-current="page"] { background: var(--surface-subtle); font-weight: 700; outline: 2px solid var(--brand); }
+.topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.pagehead { margin-bottom: 8px; }
+.pagehead h2 { margin-bottom: 0; }
+.pagehead-action { margin-top: 8px; }
+.pagehead-action .secondary, .pagehead-action button { width: auto; }
+.crumbs ol { list-style: none; display: flex; flex-wrap: wrap; gap: 4px; margin: 0 0 8px; padding: 0; }
+.crumbs li { display: inline-flex; align-items: center; min-height: 44px; }
+.bottomnav { display: none; }
+.menu-btn { width: auto; }
+.sheet { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.45); z-index: 40; display: flex; align-items: flex-end; justify-content: center; }
+.sheet-panel { background: var(--surface); border-radius: 16px 16px 0 0; width: 100%; max-width: 560px; max-height: 85vh; overflow: auto; padding: 16px 16px calc(16px + var(--sat-bottom)); }
+.sheet-panel ul { list-style: none; margin: 8px 0 0; padding: 0; }
+.sheet-panel li a, .sheet-panel li button { display: flex; align-items: center; min-height: 48px; width: 100%; }
+.space-between { justify-content: space-between; align-items: center; }
+.map-fallback { border: 1px dashed var(--line); border-radius: var(--radius); padding: 24px 16px; text-align: center; background: var(--surface-subtle); margin: 12px 0; }
+.check { display: flex; gap: 8px; align-items: flex-start; font-weight: 400; }
+.check input { width: 24px; height: 24px; min-height: 24px; flex: none; margin-top: 2px; }
+.linklike { background: none; border: none; color: var(--brand); text-decoration: underline; width: auto; min-height: 44px; padding: 10px 4px; font-weight: 400; cursor: pointer; }
+.visually-hidden { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+.tabs button { width: auto; }
+.tabs button.secondary { background: var(--surface); color: var(--ink); border: 1px solid var(--line); }
+.public { max-width: 720px; }
+
+@media (max-width: 767px) {
+  .shell { grid-template-columns: 1fr; }
+  .sidenav { display: none; }
+  .app { padding-bottom: calc(84px + var(--sat-bottom)); }
+  .bottomnav {
+    display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
+    background: var(--surface); border-top: 1px solid var(--line);
+    padding: 8px 8px calc(8px + var(--sat-bottom));
+  }
+  .bottomnav a, .bottomnav button {
+    flex: 1; min-height: 48px; display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px;
+    background: none; border: none; color: var(--ink); cursor: pointer; width: auto; padding: 8px 4px;
+  }
+  .bottomnav a[aria-current="page"], .bottomnav button[aria-current="page"] {
+    color: var(--brand-strong); outline: 2px solid var(--brand); outline-offset: -2px;
+  }
+  .row .secondary, .row button { flex: 1 1 140px; }
 }
