@@ -1,6 +1,6 @@
 # Step 7 backend contract
 
-The web app calls the local service at `POST /api/grci`.
+The web app calls the TANIM service at `POST /api/grci`.
 
 The UI does not calculate yield, production, supply load, or risk bands.
 
@@ -145,3 +145,7 @@ python scripts/service.py --serve
 The server binds to `127.0.0.1:8000` by default. It serves
 `POST /api/grci`, `GET /api/options`, and `GET /api/health`. Vite proxies
 `/api` to it in both development and preview mode.
+
+## Hosted endpoints
+
+On Vercel, the same contract is exposed through `api/options.py`, `api/grci.py`, and `api/health.py`. These files reuse `scripts/service.py`; they do not contain a second calculation engine.
