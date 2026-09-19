@@ -1,0 +1,103 @@
+{
+  "verified_as_of": "2026-09-19",
+  "conclusion": "The previous repository state was incomplete. This audit covers all plant-focused PSA price series exposed by the linked Farmgate and Retail Price sources, adds Luzon filtering, corrects SUA API paths, and keeps DA NCR monitoring as supplemental recent evidence.",
+  "official_scope": {
+    "concept_note_inputs": [
+      "farmgate prices",
+      "historical production",
+      "planted or harvested area",
+      "recent price monitoring",
+      "supply utilization accounts",
+      "weather API",
+      "NCCAG crop suitability",
+      "PAGASA climate outlook"
+    ],
+    "luzon_regions": [
+      "NCR",
+      "CAR",
+      "Region I",
+      "Region II",
+      "Region III",
+      "Region IV-A",
+      "MIMAROPA",
+      "Region V"
+    ]
+  },
+  "psa_openstat": {
+    "production_and_area": {
+      "tables": 8,
+      "extra_bearing_tables": 2,
+      "examples_of_source_coverage": {
+        "nonfood_industrial_volume_crop_entries": 148,
+        "fruit_volume_crop_entries": 83,
+        "vegetables_rootcrops_volume_crop_entries": 142,
+        "nonfood_industrial_area_crop_entries": 126,
+        "fruit_area_crop_entries": 83,
+        "vegetables_rootcrops_area_crop_entries": 120
+      },
+      "periods": "Detailed crop tables cover 2010-2026. Palay and corn production and area cover 1987-2026."
+    },
+    "farmgate_prices": {
+      "plant_tables": 18,
+      "current_series": {
+        "periods": "2010-2026",
+        "source_commodity_entries": 197
+      },
+      "legacy_series": {
+        "periods": "1990-2020",
+        "source_commodity_entries": 192,
+        "cutflowers_start": 2006
+      },
+      "geography": "National, regional, provincial, and selected-city rows depending on series. TANIM keeps only available Luzon rows and their children.",
+      "overlap_rule": "Raw series stay separate. Current series is preferred for 2010 onward."
+    },
+    "retail_prices": {
+      "plant_tables": 24,
+      "current_series": {
+        "periods": "2018-2026",
+        "source_commodity_entries": 112
+      },
+      "revised_series": {
+        "periods": "2012-2021",
+        "source_commodity_entries": 74
+      },
+      "legacy_series": {
+        "periods": "1990-2021",
+        "source_commodity_entries": 41
+      },
+      "geography": "National, regional, provincial, and selected-city rows. TANIM keeps only available Luzon rows and their children.",
+      "overlap_rule": "Raw series stay separate. Use current for 2018 onward, revised for 2012-2017, and legacy for 1990-2011."
+    },
+    "supply_utilization": {
+      "plant_tables": 7,
+      "source_commodity_entries": 66,
+      "periods": "1990-2022",
+      "geography": "National only. These values are not relabeled as Luzon demand."
+    }
+  },
+  "da_price_monitoring": {
+    "role": "Recent market pulse only",
+    "geography": "NCR monitored markets",
+    "limitation": "The linked DA price-monitoring reports do not provide complete all-Luzon retail coverage. PSA retail-price tables supply the geographic Luzon price history."
+  },
+  "demo_scope": {
+    "fixed_demo_crops": [
+      "tomato",
+      "eggplant"
+    ],
+    "note": "The demo remains fixed, but the source data layer is not restricted to these crops."
+  },
+  "physical_repository_note": "The full materialized OpenSTAT corpus is not committed as static CSV because the selected official tables contain millions of source cells. main stores the audited manifests, series policy, tests, and deterministic fetcher that materializes every selected Luzon row.",
+  "weather": {
+    "scope": "Luzon runtime coordinates",
+    "note": "Tanauan remains a demo default only. Weather requests are not hard-coded to one municipality."
+  },
+  "nccag": {
+    "scope": "Luzon locations within nationwide NCCAG Version 2.0",
+    "crop_suitability_layers": 21,
+    "multi_hazards": 8
+  },
+  "pagasa": {
+    "scope": "Luzon context extracted from the August 2026 review and September 2026 outlook"
+  }
+}

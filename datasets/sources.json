@@ -1,0 +1,112 @@
+[
+  {
+    "source_id": "PSA-OPENSTAT-CROPS",
+    "publisher": "Philippine Statistics Authority",
+    "title": "Crops OpenSTAT tables",
+    "url": "https://openstat.psa.gov.ph/Metadata/Agriculture-Forestry-Fisheries/Crops",
+    "accessed": "2026-09-19",
+    "transformation": "live_api_table_catalog",
+    "terms_key": "government_source",
+    "verification": "source_checked"
+  },
+  {
+    "source_id": "PSA-OPENSTAT-FARMGATE",
+    "publisher": "Philippine Statistics Authority",
+    "title": "Farmgate Prices",
+    "url": "https://openstat.psa.gov.ph/Metadata/Prices/Farmgate-Prices",
+    "accessed": "2026-09-19",
+    "transformation": "live_api_table_catalog",
+    "terms_key": "government_source",
+    "verification": "source_checked"
+  },
+  {
+    "source_id": "PSA-OPENSTAT-RETAIL",
+    "publisher": "Philippine Statistics Authority",
+    "title": "Retail Prices",
+    "url": "https://openstat.psa.gov.ph/Metadata/Prices/Retail-Prices",
+    "accessed": "2026-09-19",
+    "transformation": "live_api_table_catalog",
+    "terms_key": "government_source",
+    "verification": "source_checked"
+  },
+  {
+    "source_id": "PSA-OPENSTAT-SUA",
+    "publisher": "Philippine Statistics Authority",
+    "title": "Supply Utilization Accounts",
+    "url": "https://openstat.psa.gov.ph/Metadata/Agricultural-Accounts/Supply-Utilization-Accounts",
+    "accessed": "2026-09-19",
+    "transformation": "live_api_table_catalog",
+    "terms_key": "government_source",
+    "verification": "source_checked"
+  },
+  {
+    "source_id": "DA-PM-INDEX",
+    "publisher": "Department of Agriculture",
+    "title": "Price Monitoring",
+    "url": "https://www.da.gov.ph/price-monitoring/",
+    "accessed": "2026-09-19",
+    "transformation": "source_index",
+    "terms_key": "government_source",
+    "verification": "source_checked"
+  },
+  {
+    "source_id": "DA-PM-2026-09-07-13",
+    "publisher": "Department of Agriculture",
+    "title": "Weekly Average Retail Price of Selected Agri-Fishery Commodities in NCR Markets, September 7-13, 2026",
+    "url": "https://www.da.gov.ph/wp-content/uploads/2026/09/Weekly-Average-Prices-September-7-13-2026.pdf",
+    "accessed": "2026-09-19",
+    "transformation": "all_rows_transcribed",
+    "terms_key": "government_source",
+    "verification": "value_checked"
+  },
+  {
+    "source_id": "PAGASA-AGRO-2026-08",
+    "publisher": "PAGASA",
+    "title": "Monthly Philippine Agro-climatic Review and Outlook, August 2026",
+    "url": "https://bagong.pagasa.dost.gov.ph/agri-weather/monthly-agroclimatic-review-and-outlook",
+    "accessed": "2026-09-19",
+    "transformation": "source_summary",
+    "terms_key": "government_source",
+    "verification": "source_checked"
+  },
+  {
+    "source_id": "OPEN-METEO-API",
+    "publisher": "Open-Meteo",
+    "title": "Weather Forecast and Historical Weather API",
+    "url": "https://open-meteo.com/",
+    "accessed": "2026-09-19",
+    "transformation": "runtime_api_config",
+    "terms_key": "cc_by_4_0",
+    "verification": "source_checked"
+  },
+  {
+    "source_id": "UNGEGN-TANAUAN",
+    "publisher": "United Nations Group of Experts on Geographical Names",
+    "title": "City Details - Tanauan",
+    "url": "https://ungegn.un.org/dashboard/cities/details?id=3169",
+    "accessed": "2026-09-19",
+    "transformation": "coordinates_transcribed",
+    "terms_key": "reference_source",
+    "verification": "value_checked"
+  },
+  {
+    "source_id": "DA-AMIA-NCCAG",
+    "publisher": "Department of Agriculture - AMIA",
+    "title": "National Color-Coded Agricultural Guide Map",
+    "url": "https://amia.da.gov.ph/national-color-coded-agricultural-guide-nccag-map/",
+    "accessed": "2026-09-19",
+    "transformation": "source_reference",
+    "terms_key": "reference_only",
+    "verification": "source_checked"
+  },
+  {
+    "source_id": "DEMO-2026",
+    "publisher": "Team QCUltivators",
+    "title": "Synthetic TANIM demo data",
+    "url": "",
+    "accessed": "2026-09-19",
+    "transformation": "synthetic",
+    "terms_key": "project",
+    "verification": "synthetic"
+  }
+]

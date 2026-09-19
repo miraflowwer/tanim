@@ -1,0 +1,66 @@
+{
+  "period": "2026-08",
+  "region_context": "Luzon",
+  "review": {
+    "weather_systems": [
+      "Southwest Monsoon",
+      "low pressure areas",
+      "localized thunderstorms",
+      "tropical cyclones"
+    ],
+    "tropical_cyclones": [
+      "Luis",
+      "Maymay (Kujira)",
+      "Neneng",
+      "Obet (Saudel)",
+      "Pilandok (Krovanh)"
+    ],
+    "rainfall_context": "Above-normal rainfall occurred over most of Luzon except Bicol.",
+    "affected_luzon_regions": [
+      "Ilocos Region",
+      "Cordillera Administrative Region",
+      "Central Luzon",
+      "CALABARZON",
+      "MIMAROPA"
+    ],
+    "soil_moisture": {
+      "wet": [
+        "Ilocos Region",
+        "extreme Northern Luzon",
+        "Aparri",
+        "Cordillera Administrative Region",
+        "most of Central Luzon",
+        "National Capital Region",
+        "most areas of CALABARZON",
+        "most areas of MIMAROPA"
+      ],
+      "moist": [
+        "Tuguegarao",
+        "Isabela",
+        "Nueva Vizcaya",
+        "Bataan",
+        "Mulanay",
+        "Aborlan"
+      ],
+      "dry_examples": [
+        "Casiguran",
+        "Alabat",
+        "Puerto Princesa"
+      ]
+    },
+    "temperature_context": "Most areas were slightly above to above average, with cooler-than-average conditions reported in parts of La Union, Pangasinan, Zambales, Northern Palawan, and Camarines Sur.",
+    "crop_stage_context": "High value crops were reported in planting, vegetative, and harvesting stages across all regions."
+  },
+  "outlook": {
+    "period": "2026-09",
+    "rainfall_context": "Below-normal rainfall was expected in most parts of Northern Luzon, Zambales, and Bataan. Near-normal rainfall was expected over the rest of the country outside other listed below-normal areas.",
+    "temperature_context": "Near-average to warmer-than-average temperatures were expected over most areas, with some Southern Luzon areas slightly cooler than average.",
+    "tropical_cyclone_range": "2 to 3",
+    "enso_status_as_of": "2026-09-07",
+    "enso_summary": "Moderate to strong El Nino was present. PAGASA expected it to continue into the first half of 2027."
+  },
+  "source_id": "PAGASA-AGRO-2026-08",
+  "data_status": "source_summary",
+  "supplemental_only": true,
+  "does_not_drive_glut_risk": true
+}

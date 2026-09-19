@@ -1,0 +1,1510 @@
+{
+  "api_base": "https://openstat.psa.gov.ph/PXWeb/api/v1/en/DB",
+  "verified_as_of": "2026-09-19",
+  "scope": "Plant and crop data required by the TANIM concept note. All PSA price series exposed by the linked Farmgate and Retail Price sources are retained. Geographic tables are filtered to Luzon. National-only SUA remains national.",
+  "tables": [
+    {
+      "family": "production",
+      "geo_scope": "luzon",
+      "path": "2E/CS/0012E4EVCP0.px",
+      "table_key": "PSA-PROD-PALAY-CORN",
+      "title": "Palay and Corn: Volume of Production",
+      "verified_shape": [
+        6,
+        109,
+        40,
+        7
+      ],
+      "expected_luzon_regions": [
+        "CAR",
+        "I",
+        "II",
+        "III",
+        "IV-A",
+        "MIMAROPA",
+        "V"
+      ]
+    },
+    {
+      "family": "area",
+      "geo_scope": "luzon",
+      "path": "2E/CS/0022E4EAHC0.px",
+      "table_key": "PSA-AREA-PALAY-CORN",
+      "title": "Palay and Corn: Area Harvested",
+      "verified_shape": [
+        6,
+        109,
+        40,
+        7
+      ],
+      "expected_luzon_regions": [
+        "CAR",
+        "I",
+        "II",
+        "III",
+        "IV-A",
+        "MIMAROPA",
+        "V"
+      ]
+    },
+    {
+      "family": "production",
+      "geo_scope": "luzon",
+      "path": "2E/CS/0072E4EVCP1.px",
+      "table_key": "PSA-PROD-NONFOOD",
+      "title": "Non-Food and Industrial Crops: Volume of Production",
+      "verified_shape": [
+        148,
+        110,
+        17,
+        7
+      ],
+      "expected_luzon_regions": [
+        "CAR",
+        "I",
+        "II",
+        "III",
+        "IV-A",
+        "MIMAROPA",
+        "V"
+      ]
+    },
+    {
+      "family": "production",
+      "geo_scope": "luzon",
+      "path": "2E/CS/0072E4EVCP2.px",
+      "table_key": "PSA-PROD-FRUITS",
+      "title": "Fruit Crops: Volume of Production",
+      "verified_shape": [
+        83,
+        110,
+        17,
+        7
+      ],
+      "expected_luzon_regions": [
+        "CAR",
+        "I",
+        "II",
+        "III",
+        "IV-A",
+        "MIMAROPA",
+        "V"
+      ]
+    },
+    {
+      "family": "production",
+      "geo_scope": "luzon",
+      "path": "2E/CS/0082E4EVCP3.px",
+      "table_key": "PSA-PROD-VEG-ROOT",
+      "title": "Vegetables and Root Crops: Volume of Production",
+      "verified_shape": [
+        142,
+        110,
+        17,
+        7
+      ],
+      "expected_luzon_regions": [
+        "CAR",
+        "I",
+        "II",
+        "III",
+        "IV-A",
+        "MIMAROPA",
+        "V"
+      ]
+    },
+    {
+      "family": "area",
+      "geo_scope": "luzon",
+      "path": "2E/CS/0092E4EAHM1.px",
+      "table_key": "PSA-AREA-NONFOOD",
+      "title": "Non-Food and Industrial Crops: Area Planted/Harvested",
+      "verified_shape": [
+        126,
+        110,
+        17,
+        7
+      ],
+      "expected_luzon_regions": [
+        "CAR",
+        "I",
+        "II",
+        "III",
+        "IV-A",
+        "MIMAROPA",
+        "V"
+      ]
+    },
+    {
+      "family": "area",
+      "geo_scope": "luzon",
+      "path": "2E/CS/0102E4EAHM2.px",
+      "table_key": "PSA-AREA-FRUITS",
+      "title": "Fruit Crops: Area Planted/Harvested",
+      "verified_shape": [
+        83,
+        110,
+        17,
+        7
+      ],
+      "expected_luzon_regions": [
+        "CAR",
+        "I",
+        "II",
+        "III",
+        "IV-A",
+        "MIMAROPA",
+        "V"
+      ]
+    },
+    {
+      "family": "area",
+      "geo_scope": "luzon",
+      "path": "2E/CS/0112E4EAHM3.px",
+      "table_key": "PSA-AREA-VEG-ROOT",
+      "title": "Vegetables and Root Crops: Area Planted/Harvested",
+      "verified_shape": [
+        120,
+        110,
+        17,
+        7
+      ],
+      "expected_luzon_regions": [
+        "CAR",
+        "I",
+        "II",
+        "III",
+        "IV-A",
+        "MIMAROPA",
+        "V"
+      ]
+    },
+    {
+      "family": "bearing",
+      "geo_scope": "luzon",
+      "path": "2E/CS/0122E4EBTM1.px",
+      "table_key": "PSA-BEARING-NONFOOD",
+      "title": "Non-Food and Industrial Crops: Number of Bearing Trees/Hills/Vines",
+      "verified_shape": [
+        18,
+        110,
+        17,
+        7
+      ],
+      "expected_luzon_regions": [
+        "CAR",
+        "I",
+        "II",
+        "III",
+        "IV-A",
+        "MIMAROPA",
+        "V"
+      ]
+    },
+    {
+      "family": "bearing",
+      "geo_scope": "luzon",
+      "path": "2E/CS/0132E4EBTM2.px",
+      "table_key": "PSA-BEARING-FRUITS",
+      "title": "Fruit Crops: Number of Bearing Trees/Hills/Vines",
+      "verified_shape": [
+        76,
+        110,
+        17,
+        7
+      ],
+      "expected_luzon_regions": [
+        "CAR",
+        "I",
+        "II",
+        "III",
+        "IV-A",
+        "MIMAROPA",
+        "V"
+      ]
+    },
+    {
+      "family": "farmgate",
+      "geo_scope": "luzon",
+      "path": "2M/NFG/0032M4AFN01.px",
+      "table_key": "PSA-FG-CEREALS",
+      "title": "Cereals: Farmgate Prices",
+      "verified_shape": [
+        111,
+        6,
+        17,
+        13
+      ],
+      "series_id": "farmgate_current_2010_2026",
+      "period_start": 2010,
+      "period_end": 2026,
+      "precedence": 1,
+      "commodity_count": 6,
+      "expected_luzon_regions": [
+        "NCR",
+        "CAR",
+        "I",
+        "II",
+        "III",
+        "IV-A",
+        "MIMAROPA",
+        "V"
+      ]
+    },
+    {
+      "family": "farmgate",
+      "geo_scope": "luzon",
+      "path": "2M/NFG/0032M4AFN02.px",
+      "table_key": "PSA-FG-ROOTCROPS",
+      "title": "Rootcrops: Farmgate Prices",
+      "verified_shape": [
+        111,
+        14,
+        17,
+        13
+      ],
+      "series_id": "farmgate_current_2010_2026",
+      "period_start": 2010,
+      "period_end": 2026,
+      "precedence": 1,
+      "commodity_count": 14,
+      "expected_luzon_regions": [
+        "NCR",
+        "CAR",
+        "I",
+        "II",
+        "III",
+        "IV-A",
+        "MIMAROPA",
+        "V"
+      ]
+    },
+    {
+      "family": "farmgate",
+      "geo_scope": "luzon",
+      "path": "2M/NFG/0032M4AFN03.px",
+      "table_key": "PSA-FG-BEANS",
+      "title": "Beans and Legumes: Farmgate Prices",
+      "verified_shape": [
+        111,
+        19,
+        17,
+        13
+      ],
+      "series_id": "farmgate_current_2010_2026",
+      "period_start": 2010,
+      "period_end": 2026,
+      "precedence": 1,
+      "commodity_count": 19,
+      "expected_luzon_regions": [
+        "NCR",
+        "CAR",
+        "I",
+        "II",
+        "III",
+        "IV-A",
+        "MIMAROPA",
+        "V"
+      ]
+    },
+    {
+      "family": "farmgate",
+      "geo_scope": "luzon",
+      "path": "2M/NFG/0032M4AFN04.px",
+      "table_key": "PSA-FG-CONDIMENTS",
+      "title": "Condiments: Farmgate Prices",
+      "verified_shape": [
+        111,
+        12,
+        17,
+        13
+      ],
+      "series_id": "farmgate_current_2010_2026",
+      "period_start": 2010,
+      "period_end": 2026,
+      "precedence": 1,
+      "commodity_count": 12,
+      "expected_luzon_regions": [
+        "NCR",
+        "CAR",
+        "I",
+        "II",
+        "III",
+        "IV-A",
+        "MIMAROPA",
+        "V"
+      ]
+    },
+    {
+      "family": "farmgate",
+      "geo_scope": "luzon",
+      "path": "2M/NFG/0032M4AFN05.px",
+      "table_key": "PSA-FG-FRUIT-VEG",
+      "title": "Fruit Vegetables: Farmgate Prices",
+      "verified_shape": [
+        111,
+        15,
+        17,
+        13
+      ],
+      "series_id": "farmgate_current_2010_2026",
+      "period_start": 2010,
+      "period_end": 2026,
+      "precedence": 1,
+      "commodity_count": 15,
+      "expected_luzon_regions": [
+        "NCR",
+        "CAR",
+        "I",
+        "II",
+        "III",
+        "IV-A",
+        "MIMAROPA",
+        "V"
+      ]
+    },
+    {
+      "family": "farmgate",
+      "geo_scope": "luzon",
+      "path": "2M/NFG/0032M4AFN06.px",
+      "table_key": "PSA-FG-LEAFY-VEG",
+      "title": "Leafy Vegetables: Farmgate Prices",
+      "verified_shape": [
+        111,
+        20,
+        17,
+        13
+      ],
+      "series_id": "farmgate_current_2010_2026",
+      "period_start": 2010,
+      "period_end": 2026,
+      "precedence": 1,
+      "commodity_count": 20,
+      "expected_luzon_regions": [
+        "NCR",
+        "CAR",
+        "I",
+        "II",
+        "III",
+        "IV-A",
+        "MIMAROPA",
+        "V"
+      ]
+    },
+    {
+      "family": "farmgate",
+      "geo_scope": "luzon",
+      "path": "2M/NFG/0032M4AFN07.px",
+      "table_key": "PSA-FG-FRUITS",
+      "title": "Fruits: Farmgate Prices",
+      "verified_shape": [
+        111,
+        60,
+        17,
+        13
+      ],
+      "series_id": "farmgate_current_2010_2026",
+      "period_start": 2010,
+      "period_end": 2026,
+      "precedence": 1,
+      "commodity_count": 60,
+      "expected_luzon_regions": [
+        "NCR",
+        "CAR",
+        "I",
+        "II",
+        "III",
+        "IV-A",
+        "MIMAROPA",
+        "V"
+      ]
+    },
+    {
+      "family": "farmgate",
+      "geo_scope": "luzon",
+      "path": "2M/NFG/0032M4AFN08.px",
+      "table_key": "PSA-FG-COMMERCIAL",
+      "title": "Commercial Crops: Farmgate Prices",
+      "verified_shape": [
+        111,
+        17,
+        13,
+        41
+      ],
+      "series_id": "farmgate_current_2010_2026",
+      "period_start": 2010,
+      "period_end": 2026,
+      "precedence": 1,
+      "commodity_count": 41,
+      "expected_luzon_regions": [
+        "NCR",
+        "CAR",
+        "I",
+        "II",
+        "III",
+        "IV-A",
+        "MIMAROPA",
+        "V"
+      ]
+    },
+    {
+      "family": "farmgate",
+      "geo_scope": "luzon",
+      "path": "2M/NFG/0032M4AFN09.px",
+      "table_key": "PSA-FG-CUTFLOWERS",
+      "title": "Cutflowers: Farmgate Prices",
+      "verified_shape": [
+        10,
+        111,
+        17,
+        13
+      ],
+      "series_id": "farmgate_current_2010_2026",
+      "period_start": 2010,
+      "period_end": 2026,
+      "precedence": 1,
+      "commodity_count": 10,
+      "expected_luzon_regions": [
+        "NCR",
+        "CAR",
+        "I",
+        "II",
+        "III",
+        "IV-A",
+        "MIMAROPA",
+        "V"
+      ]
+    },
+    {
+      "family": "retail",
+      "geo_scope": "luzon",
+      "path": "2M/2018NEW/0042M4ARN01.px",
+      "table_key": "PSA-RETAIL-CEREALS",
+      "title": "Cereals: Retail Prices of Agricultural Commodities",
+      "verified_shape": [
+        119,
+        14,
+        9,
+        13
+      ],
+      "series_id": "retail_current_2018_2026",
+      "period_start": 2018,
+      "period_end": 2026,
+      "precedence": 1,
+      "commodity_count": 14,
+      "expected_luzon_regions": [
+        "NCR",
+        "CAR",
+        "I",
+        "II",
+        "III",
+        "IV-A",
+        "MIMAROPA",
+        "V"
+      ]
+    },
+    {
+      "family": "retail",
+      "geo_scope": "luzon",
+      "path": "2M/2018NEW/0042M4ARN02.px",
+      "table_key": "PSA-RETAIL-ROOTCROPS",
+      "title": "Rootcrops: Retail Prices of Agricultural Commodities",
+      "verified_shape": [
+        119,
+        25,
+        9,
+        13
+      ],
+      "series_id": "retail_current_2018_2026",
+      "period_start": 2018,
+      "period_end": 2026,
+      "precedence": 1,
+      "commodity_count": 25,
+      "expected_luzon_regions": [
+        "NCR",
+        "CAR",
+        "I",
+        "II",
+        "III",
+        "IV-A",
+        "MIMAROPA",
+        "V"
+      ]
+    },
+    {
+      "family": "retail",
+      "geo_scope": "luzon",
+      "path": "2M/2018NEW/0042M4ARN03.px",
+      "table_key": "PSA-RETAIL-BEANS",
+      "title": "Beans and Legumes: Retail Prices of Agricultural Commodities",
+      "verified_shape": [
+        119,
+        7,
+        9,
+        13
+      ],
+      "series_id": "retail_current_2018_2026",
+      "period_start": 2018,
+      "period_end": 2026,
+      "precedence": 1,
+      "commodity_count": 7,
+      "expected_luzon_regions": [
+        "NCR",
+        "CAR",
+        "I",
+        "II",
+        "III",
+        "IV-A",
+        "MIMAROPA",
+        "V"
+      ]
+    },
+    {
+      "family": "retail",
+      "geo_scope": "luzon",
+      "path": "2M/2018NEW/0042M4ARN04.px",
+      "table_key": "PSA-RETAIL-CONDIMENTS",
+      "title": "Condiments: Retail Prices of Agricultural Commodities",
+      "verified_shape": [
+        119,
+        7,
+        9,
+        13
+      ],
+      "series_id": "retail_current_2018_2026",
+      "period_start": 2018,
+      "period_end": 2026,
+      "precedence": 1,
+      "commodity_count": 7,
+      "expected_luzon_regions": [
+        "NCR",
+        "CAR",
+        "I",
+        "II",
+        "III",
+        "IV-A",
+        "MIMAROPA",
+        "V"
+      ]
+    },
+    {
+      "family": "retail",
+      "geo_scope": "luzon",
+      "path": "2M/2018NEW/0042M4ARN05.px",
+      "table_key": "PSA-RETAIL-FRUIT-VEG",
+      "title": "Fruit Vegetables: Retail Prices of Agricultural Commodities",
+      "verified_shape": [
+        119,
+        9,
+        9,
+        13
+      ],
+      "series_id": "retail_current_2018_2026",
+      "period_start": 2018,
+      "period_end": 2026,
+      "precedence": 1,
+      "commodity_count": 9,
+      "expected_luzon_regions": [
+        "NCR",
+        "CAR",
+        "I",
+        "II",
+        "III",
+        "IV-A",
+        "MIMAROPA",
+        "V"
+      ]
+    },
+    {
+      "family": "retail",
+      "geo_scope": "luzon",
+      "path": "2M/2018NEW/0042M4ARN06.px",
+      "table_key": "PSA-RETAIL-LEAFY-VEG",
+      "title": "Leafy Vegetables: Retail Prices of Agricultural Commodities",
+      "verified_shape": [
+        119,
+        12,
+        9,
+        13
+      ],
+      "series_id": "retail_current_2018_2026",
+      "period_start": 2018,
+      "period_end": 2026,
+      "precedence": 1,
+      "commodity_count": 12,
+      "expected_luzon_regions": [
+        "NCR",
+        "CAR",
+        "I",
+        "II",
+        "III",
+        "IV-A",
+        "MIMAROPA",
+        "V"
+      ]
+    },
+    {
+      "family": "retail",
+      "geo_scope": "luzon",
+      "path": "2M/2018NEW/0042M4ARN07.px",
+      "table_key": "PSA-RETAIL-FRUITS",
+      "title": "Fruits: Retail Prices of Agricultural Commodities",
+      "verified_shape": [
+        119,
+        36,
+        9,
+        13
+      ],
+      "series_id": "retail_current_2018_2026",
+      "period_start": 2018,
+      "period_end": 2026,
+      "precedence": 1,
+      "commodity_count": 36,
+      "expected_luzon_regions": [
+        "NCR",
+        "CAR",
+        "I",
+        "II",
+        "III",
+        "IV-A",
+        "MIMAROPA",
+        "V"
+      ]
+    },
+    {
+      "family": "retail",
+      "geo_scope": "luzon",
+      "path": "2M/2018NEW/0042M4ARN08.px",
+      "table_key": "PSA-RETAIL-COMMERCIAL",
+      "title": "Commercial Crops: Retail Prices of Agricultural Commodities",
+      "verified_shape": [
+        119,
+        2,
+        9,
+        13
+      ],
+      "series_id": "retail_current_2018_2026",
+      "period_start": 2018,
+      "period_end": 2026,
+      "precedence": 1,
+      "commodity_count": 2,
+      "expected_luzon_regions": [
+        "NCR",
+        "CAR",
+        "I",
+        "II",
+        "III",
+        "IV-A",
+        "MIMAROPA",
+        "V"
+      ]
+    },
+    {
+      "family": "sua",
+      "geo_scope": "national",
+      "path": "2B/AA/SU/0012B5ESUA0.px",
+      "table_key": "PSA-SUA-RICE-CORN",
+      "title": "Rice and Corn: Supply Utilization Accounts",
+      "verified_shape": [
+        2,
+        33,
+        12
+      ]
+    },
+    {
+      "family": "sua",
+      "geo_scope": "national",
+      "path": "2B/AA/SU/0022B5ESUA1.px",
+      "table_key": "PSA-SUA-ROOTCROPS",
+      "title": "Rootcrops: Supply Utilization Accounts",
+      "verified_shape": [
+        7,
+        33,
+        10
+      ]
+    },
+    {
+      "family": "sua",
+      "geo_scope": "national",
+      "path": "2B/AA/SU/0032B5ESUA2.px",
+      "table_key": "PSA-SUA-VEGETABLES",
+      "title": "Vegetables: Supply Utilization Accounts",
+      "verified_shape": [
+        26,
+        33,
+        10
+      ]
+    },
+    {
+      "family": "sua",
+      "geo_scope": "national",
+      "path": "2B/AA/SU/0042B5ESUA3.px",
+      "table_key": "PSA-SUA-NUTS",
+      "title": "Nuts: Supply Utilization Accounts",
+      "verified_shape": [
+        2,
+        33,
+        10
+      ]
+    },
+    {
+      "family": "sua",
+      "geo_scope": "national",
+      "path": "2B/AA/SU/0052B5ESUA4.px",
+      "table_key": "PSA-SUA-FRUITS",
+      "title": "Fruits: Supply Utilization Accounts",
+      "verified_shape": [
+        21,
+        33,
+        10
+      ]
+    },
+    {
+      "family": "sua",
+      "geo_scope": "national",
+      "path": "2B/AA/SU/0062B5ESUA5.px",
+      "table_key": "PSA-SUA-COMMERCIAL",
+      "title": "Commercial Crops: Supply Utilization Accounts",
+      "verified_shape": [
+        4,
+        33,
+        13
+      ]
+    },
+    {
+      "family": "sua",
+      "geo_scope": "national",
+      "path": "2B/AA/SU/0072B5ESUA6.px",
+      "table_key": "PSA-SUA-NONFOOD",
+      "title": "Non-food: Supply Utilization Accounts",
+      "verified_shape": [
+        4,
+        33,
+        7
+      ]
+    },
+    {
+      "family": "farmgate",
+      "geo_scope": "luzon",
+      "path": "2M/FG/0032M4AFP01.px",
+      "table_key": "PSA-FG-LEGACY-CEREALS",
+      "title": "Cereals: Farmgate Prices, Legacy Series",
+      "verified_shape": [
+        101,
+        6,
+        31,
+        13
+      ],
+      "series_id": "farmgate_legacy_1990_2020",
+      "period_start": 1990,
+      "period_end": 2020,
+      "precedence": 2,
+      "commodity_count": 6,
+      "expected_luzon_regions": [
+        "NCR",
+        "CAR",
+        "I",
+        "II",
+        "III",
+        "IV-A",
+        "MIMAROPA",
+        "V"
+      ]
+    },
+    {
+      "family": "farmgate",
+      "geo_scope": "luzon",
+      "path": "2M/FG/0032M4AFP02.px",
+      "table_key": "PSA-FG-LEGACY-ROOTCROPS",
+      "title": "Rootcrops: Farmgate Prices, Legacy Series",
+      "verified_shape": [
+        101,
+        16,
+        31,
+        13
+      ],
+      "series_id": "farmgate_legacy_1990_2020",
+      "period_start": 1990,
+      "period_end": 2020,
+      "precedence": 2,
+      "commodity_count": 16,
+      "expected_luzon_regions": [
+        "NCR",
+        "CAR",
+        "I",
+        "II",
+        "III",
+        "IV-A",
+        "MIMAROPA",
+        "V"
+      ]
+    },
+    {
+      "family": "farmgate",
+      "geo_scope": "luzon",
+      "path": "2M/FG/0032M4AFP03.px",
+      "table_key": "PSA-FG-LEGACY-BEANS",
+      "title": "Beans and Legumes: Farmgate Prices, Legacy Series",
+      "verified_shape": [
+        101,
+        18,
+        31,
+        13
+      ],
+      "series_id": "farmgate_legacy_1990_2020",
+      "period_start": 1990,
+      "period_end": 2020,
+      "precedence": 2,
+      "commodity_count": 18,
+      "expected_luzon_regions": [
+        "NCR",
+        "CAR",
+        "I",
+        "II",
+        "III",
+        "IV-A",
+        "MIMAROPA",
+        "V"
+      ]
+    },
+    {
+      "family": "farmgate",
+      "geo_scope": "luzon",
+      "path": "2M/FG/0032M4AFP04.px",
+      "table_key": "PSA-FG-LEGACY-CONDIMENTS",
+      "title": "Condiments: Farmgate Prices, Legacy Series",
+      "verified_shape": [
+        101,
+        12,
+        31,
+        13
+      ],
+      "series_id": "farmgate_legacy_1990_2020",
+      "period_start": 1990,
+      "period_end": 2020,
+      "precedence": 2,
+      "commodity_count": 12,
+      "expected_luzon_regions": [
+        "NCR",
+        "CAR",
+        "I",
+        "II",
+        "III",
+        "IV-A",
+        "MIMAROPA",
+        "V"
+      ]
+    },
+    {
+      "family": "farmgate",
+      "geo_scope": "luzon",
+      "path": "2M/FG/0032M4AFP05.px",
+      "table_key": "PSA-FG-LEGACY-FRUIT-VEG",
+      "title": "Fruit Vegetables: Farmgate Prices, Legacy Series",
+      "verified_shape": [
+        101,
+        16,
+        31,
+        13
+      ],
+      "series_id": "farmgate_legacy_1990_2020",
+      "period_start": 1990,
+      "period_end": 2020,
+      "precedence": 2,
+      "commodity_count": 16,
+      "expected_luzon_regions": [
+        "NCR",
+        "CAR",
+        "I",
+        "II",
+        "III",
+        "IV-A",
+        "MIMAROPA",
+        "V"
+      ]
+    },
+    {
+      "family": "farmgate",
+      "geo_scope": "luzon",
+      "path": "2M/FG/0032M4AFP06.px",
+      "table_key": "PSA-FG-LEGACY-LEAFY-VEG",
+      "title": "Leafy Vegetables: Farmgate Prices, Legacy Series",
+      "verified_shape": [
+        101,
+        20,
+        31,
+        13
+      ],
+      "series_id": "farmgate_legacy_1990_2020",
+      "period_start": 1990,
+      "period_end": 2020,
+      "precedence": 2,
+      "commodity_count": 20,
+      "expected_luzon_regions": [
+        "NCR",
+        "CAR",
+        "I",
+        "II",
+        "III",
+        "IV-A",
+        "MIMAROPA",
+        "V"
+      ]
+    },
+    {
+      "family": "farmgate",
+      "geo_scope": "luzon",
+      "path": "2M/FG/0032M4AFP07.px",
+      "table_key": "PSA-FG-LEGACY-FRUITS",
+      "title": "Fruits: Farmgate Prices, Legacy Series",
+      "verified_shape": [
+        101,
+        48,
+        31,
+        13
+      ],
+      "series_id": "farmgate_legacy_1990_2020",
+      "period_start": 1990,
+      "period_end": 2020,
+      "precedence": 2,
+      "commodity_count": 48,
+      "expected_luzon_regions": [
+        "NCR",
+        "CAR",
+        "I",
+        "II",
+        "III",
+        "IV-A",
+        "MIMAROPA",
+        "V"
+      ]
+    },
+    {
+      "family": "farmgate",
+      "geo_scope": "luzon",
+      "path": "2M/FG/0032M4AFP08.px",
+      "table_key": "PSA-FG-LEGACY-COMMERCIAL",
+      "title": "Commercial Crops: Farmgate Prices, Legacy Series",
+      "verified_shape": [
+        101,
+        45,
+        31,
+        13
+      ],
+      "series_id": "farmgate_legacy_1990_2020",
+      "period_start": 1990,
+      "period_end": 2020,
+      "precedence": 2,
+      "commodity_count": 45,
+      "expected_luzon_regions": [
+        "NCR",
+        "CAR",
+        "I",
+        "II",
+        "III",
+        "IV-A",
+        "MIMAROPA",
+        "V"
+      ]
+    },
+    {
+      "family": "farmgate",
+      "geo_scope": "luzon",
+      "path": "2M/FG/0032M4AFP09.px",
+      "table_key": "PSA-FG-LEGACY-CUTFLOWERS",
+      "title": "Cutflowers: Farmgate Prices, Legacy Series",
+      "verified_shape": [
+        101,
+        11,
+        15,
+        13
+      ],
+      "series_id": "farmgate_legacy_2006_2020",
+      "period_start": 2006,
+      "period_end": 2020,
+      "precedence": 2,
+      "commodity_count": 11,
+      "expected_luzon_regions": [
+        "NCR",
+        "CAR",
+        "I",
+        "II",
+        "III",
+        "IV-A",
+        "MIMAROPA",
+        "V"
+      ]
+    },
+    {
+      "family": "retail",
+      "geo_scope": "luzon",
+      "path": "2M/RP/0042M4ARP01.px",
+      "table_key": "PSA-RETAIL-LEGACY-CEREALS",
+      "title": "Cereals: Retail Prices, Legacy Series",
+      "verified_shape": [
+        100,
+        8,
+        32,
+        13
+      ],
+      "series_id": "retail_legacy_1990_2021",
+      "period_start": 1990,
+      "period_end": 2021,
+      "precedence": 3,
+      "commodity_count": 8,
+      "expected_luzon_regions": [
+        "NCR",
+        "CAR",
+        "I",
+        "II",
+        "III",
+        "IV-A",
+        "MIMAROPA",
+        "V"
+      ]
+    },
+    {
+      "family": "retail",
+      "geo_scope": "luzon",
+      "path": "2M/RP/0042M4ARP02.px",
+      "table_key": "PSA-RETAIL-LEGACY-ROOTCROPS",
+      "title": "Rootcrops: Retail Prices, Legacy Series",
+      "verified_shape": [
+        100,
+        4,
+        32,
+        13
+      ],
+      "series_id": "retail_legacy_1990_2021",
+      "period_start": 1990,
+      "period_end": 2021,
+      "precedence": 3,
+      "commodity_count": 4,
+      "expected_luzon_regions": [
+        "NCR",
+        "CAR",
+        "I",
+        "II",
+        "III",
+        "IV-A",
+        "MIMAROPA",
+        "V"
+      ]
+    },
+    {
+      "family": "retail",
+      "geo_scope": "luzon",
+      "path": "2M/RP/0042M4ARP03.px",
+      "table_key": "PSA-RETAIL-LEGACY-BEANS",
+      "title": "Beans and Legumes: Retail Prices, Legacy Series",
+      "verified_shape": [
+        100,
+        5,
+        32,
+        13
+      ],
+      "series_id": "retail_legacy_1990_2021",
+      "period_start": 1990,
+      "period_end": 2021,
+      "precedence": 3,
+      "commodity_count": 5,
+      "expected_luzon_regions": [
+        "NCR",
+        "CAR",
+        "I",
+        "II",
+        "III",
+        "IV-A",
+        "MIMAROPA",
+        "V"
+      ]
+    },
+    {
+      "family": "retail",
+      "geo_scope": "luzon",
+      "path": "2M/RP/0042M4ARP04.px",
+      "table_key": "PSA-RETAIL-LEGACY-CONDIMENTS",
+      "title": "Condiments: Retail Prices, Legacy Series",
+      "verified_shape": [
+        100,
+        4,
+        32,
+        13
+      ],
+      "series_id": "retail_legacy_1990_2021",
+      "period_start": 1990,
+      "period_end": 2021,
+      "precedence": 3,
+      "commodity_count": 4,
+      "expected_luzon_regions": [
+        "NCR",
+        "CAR",
+        "I",
+        "II",
+        "III",
+        "IV-A",
+        "MIMAROPA",
+        "V"
+      ]
+    },
+    {
+      "family": "retail",
+      "geo_scope": "luzon",
+      "path": "2M/RP/0042M4ARP05.px",
+      "table_key": "PSA-RETAIL-LEGACY-FRUIT-VEG",
+      "title": "Fruit Vegetables: Retail Prices, Legacy Series",
+      "verified_shape": [
+        100,
+        6,
+        32,
+        13
+      ],
+      "series_id": "retail_legacy_1990_2021",
+      "period_start": 1990,
+      "period_end": 2021,
+      "precedence": 3,
+      "commodity_count": 6,
+      "expected_luzon_regions": [
+        "NCR",
+        "CAR",
+        "I",
+        "II",
+        "III",
+        "IV-A",
+        "MIMAROPA",
+        "V"
+      ]
+    },
+    {
+      "family": "retail",
+      "geo_scope": "luzon",
+      "path": "2M/RP/0042M4ARP06.px",
+      "table_key": "PSA-RETAIL-LEGACY-LEAFY-VEG",
+      "title": "Leafy Vegetables: Retail Prices, Legacy Series",
+      "verified_shape": [
+        100,
+        4,
+        32,
+        13
+      ],
+      "series_id": "retail_legacy_1990_2021",
+      "period_start": 1990,
+      "period_end": 2021,
+      "precedence": 3,
+      "commodity_count": 4,
+      "expected_luzon_regions": [
+        "NCR",
+        "CAR",
+        "I",
+        "II",
+        "III",
+        "IV-A",
+        "MIMAROPA",
+        "V"
+      ]
+    },
+    {
+      "family": "retail",
+      "geo_scope": "luzon",
+      "path": "2M/RP/0042M4ARP07.px",
+      "table_key": "PSA-RETAIL-LEGACY-FRUITS",
+      "title": "Fruits: Retail Prices, Legacy Series",
+      "verified_shape": [
+        100,
+        9,
+        32,
+        13
+      ],
+      "series_id": "retail_legacy_1990_2021",
+      "period_start": 1990,
+      "period_end": 2021,
+      "precedence": 3,
+      "commodity_count": 9,
+      "expected_luzon_regions": [
+        "NCR",
+        "CAR",
+        "I",
+        "II",
+        "III",
+        "IV-A",
+        "MIMAROPA",
+        "V"
+      ]
+    },
+    {
+      "family": "retail",
+      "geo_scope": "luzon",
+      "path": "2M/RP/0042M4ARP08.px",
+      "table_key": "PSA-RETAIL-LEGACY-COMMERCIAL",
+      "title": "Commercial Crops: Retail Prices, Legacy Series",
+      "verified_shape": [
+        100,
+        1,
+        32,
+        13
+      ],
+      "series_id": "retail_legacy_1990_2021",
+      "period_start": 1990,
+      "period_end": 2021,
+      "precedence": 3,
+      "commodity_count": 1,
+      "expected_luzon_regions": [
+        "NCR",
+        "CAR",
+        "I",
+        "II",
+        "III",
+        "IV-A",
+        "MIMAROPA",
+        "V"
+      ]
+    },
+    {
+      "family": "retail",
+      "geo_scope": "luzon",
+      "path": "2M/NRP/0042M4ARN01.px",
+      "table_key": "PSA-RETAIL-REVISED-CEREALS",
+      "title": "Cereals: Retail Prices, Revised 2012 Series",
+      "verified_shape": [
+        100,
+        18,
+        10,
+        13
+      ],
+      "series_id": "retail_revised_2012_2021",
+      "period_start": 2012,
+      "period_end": 2021,
+      "precedence": 2,
+      "commodity_count": 18,
+      "expected_luzon_regions": [
+        "NCR",
+        "CAR",
+        "I",
+        "II",
+        "III",
+        "IV-A",
+        "MIMAROPA",
+        "V"
+      ]
+    },
+    {
+      "family": "retail",
+      "geo_scope": "luzon",
+      "path": "2M/NRP/0042M4ARN02.px",
+      "table_key": "PSA-RETAIL-REVISED-ROOTCROPS",
+      "title": "Rootcrops: Retail Prices, Revised 2012 Series",
+      "verified_shape": [
+        100,
+        11,
+        10,
+        13
+      ],
+      "series_id": "retail_revised_2012_2021",
+      "period_start": 2012,
+      "period_end": 2021,
+      "precedence": 2,
+      "commodity_count": 11,
+      "expected_luzon_regions": [
+        "NCR",
+        "CAR",
+        "I",
+        "II",
+        "III",
+        "IV-A",
+        "MIMAROPA",
+        "V"
+      ]
+    },
+    {
+      "family": "retail",
+      "geo_scope": "luzon",
+      "path": "2M/NRP/0042M4ARN03.px",
+      "table_key": "PSA-RETAIL-REVISED-BEANS",
+      "title": "Beans and Legumes: Retail Prices, Revised 2012 Series",
+      "verified_shape": [
+        100,
+        5,
+        10,
+        13
+      ],
+      "series_id": "retail_revised_2012_2021",
+      "period_start": 2012,
+      "period_end": 2021,
+      "precedence": 2,
+      "commodity_count": 5,
+      "expected_luzon_regions": [
+        "NCR",
+        "CAR",
+        "I",
+        "II",
+        "III",
+        "IV-A",
+        "MIMAROPA",
+        "V"
+      ]
+    },
+    {
+      "family": "retail",
+      "geo_scope": "luzon",
+      "path": "2M/NRP/0042M4ARN04.px",
+      "table_key": "PSA-RETAIL-REVISED-CONDIMENTS",
+      "title": "Condiments: Retail Prices, Revised 2012 Series",
+      "verified_shape": [
+        100,
+        5,
+        10,
+        13
+      ],
+      "series_id": "retail_revised_2012_2021",
+      "period_start": 2012,
+      "period_end": 2021,
+      "precedence": 2,
+      "commodity_count": 5,
+      "expected_luzon_regions": [
+        "NCR",
+        "CAR",
+        "I",
+        "II",
+        "III",
+        "IV-A",
+        "MIMAROPA",
+        "V"
+      ]
+    },
+    {
+      "family": "retail",
+      "geo_scope": "luzon",
+      "path": "2M/NRP/0042M4ARN05.px",
+      "table_key": "PSA-RETAIL-REVISED-FRUIT-VEG",
+      "title": "Fruit Vegetables: Retail Prices, Revised 2012 Series",
+      "verified_shape": [
+        100,
+        9,
+        10,
+        13
+      ],
+      "series_id": "retail_revised_2012_2021",
+      "period_start": 2012,
+      "period_end": 2021,
+      "precedence": 2,
+      "commodity_count": 9,
+      "expected_luzon_regions": [
+        "NCR",
+        "CAR",
+        "I",
+        "II",
+        "III",
+        "IV-A",
+        "MIMAROPA",
+        "V"
+      ]
+    },
+    {
+      "family": "retail",
+      "geo_scope": "luzon",
+      "path": "2M/NRP/0042M4ARN06.px",
+      "table_key": "PSA-RETAIL-REVISED-LEAFY-VEG",
+      "title": "Leafy Vegetables: Retail Prices, Revised 2012 Series",
+      "verified_shape": [
+        100,
+        6,
+        10,
+        13
+      ],
+      "series_id": "retail_revised_2012_2021",
+      "period_start": 2012,
+      "period_end": 2021,
+      "precedence": 2,
+      "commodity_count": 6,
+      "expected_luzon_regions": [
+        "NCR",
+        "CAR",
+        "I",
+        "II",
+        "III",
+        "IV-A",
+        "MIMAROPA",
+        "V"
+      ]
+    },
+    {
+      "family": "retail",
+      "geo_scope": "luzon",
+      "path": "2M/NRP/0042M4ARN07.px",
+      "table_key": "PSA-RETAIL-REVISED-FRUITS",
+      "title": "Fruits: Retail Prices, Revised 2012 Series",
+      "verified_shape": [
+        100,
+        18,
+        10,
+        13
+      ],
+      "series_id": "retail_revised_2012_2021",
+      "period_start": 2012,
+      "period_end": 2021,
+      "precedence": 2,
+      "commodity_count": 18,
+      "expected_luzon_regions": [
+        "NCR",
+        "CAR",
+        "I",
+        "II",
+        "III",
+        "IV-A",
+        "MIMAROPA",
+        "V"
+      ]
+    },
+    {
+      "family": "retail",
+      "geo_scope": "luzon",
+      "path": "2M/NRP/0042M4ARN08.px",
+      "table_key": "PSA-RETAIL-REVISED-COMMERCIAL",
+      "title": "Commercial Crops: Retail Prices, Revised 2012 Series",
+      "verified_shape": [
+        100,
+        2,
+        10,
+        13
+      ],
+      "series_id": "retail_revised_2012_2021",
+      "period_start": 2012,
+      "period_end": 2021,
+      "precedence": 2,
+      "commodity_count": 2,
+      "expected_luzon_regions": [
+        "NCR",
+        "CAR",
+        "I",
+        "II",
+        "III",
+        "IV-A",
+        "MIMAROPA",
+        "V"
+      ]
+    }
+  ],
+  "excluded_tables": [
+    {
+      "source": "PSA crops",
+      "reason": "Major-crop production, area, and bearing tables are aggregate duplicates of the more detailed crop-group tables."
+    },
+    {
+      "source": "PSA crops",
+      "reason": "Stocks, fertilizer-use, and seasonally adjusted tables are outside the concept note's production and planted-area inputs."
+    },
+    {
+      "source": "PSA farmgate",
+      "reason": "Livestock, poultry, other animals, and fisheries tables are outside TANIM's plant scope."
+    },
+    {
+      "source": "PSA retail",
+      "reason": "Livestock, poultry, and fish tables are outside TANIM's plant scope."
+    },
+    {
+      "source": "PSA SUA",
+      "reason": "Livestock, poultry, and fishery tables are outside TANIM's plant scope."
+    }
+  ],
+  "price_series_rule": "Do not silently combine overlapping PSA price series. Preserve series_id. For a single continuous UI history, use price_series_policy.json."
+}

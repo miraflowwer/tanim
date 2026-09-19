@@ -1,0 +1,157 @@
+name: TANIM CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 1 * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tanim-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  python:
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    env:
+      PYTHONPATH: .:backend
+      TANIM_RUNTIME_MODE: inmemory
+      ALLOW_DEV_AUTH: "true"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - name: Install backend and check tools
+        run: python -m pip install -r backend/requirements.txt ruff bandit pip-audit
+      - name: Lint production Python and tests
+        run: ruff check --select E4,E7,E9,F,B backend/app backend/tests scripts/grci.py scripts/generate_openapi.py
+      - name: Run domain, API, data, and hackathon tests
+        run: python -m pytest backend/tests tests -q
+      - name: Check generated FastAPI OpenAPI
+        run: python scripts/generate_openapi.py --check
+      - name: Audit Python dependencies
+        run: pip-audit -r backend/requirements.txt
+      - name: Run blocking static security analysis
+        run: bandit -q -r backend/app
+
+  postgres:
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgis/postgis:16-3.4
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: tanim_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d tanim_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PYTHONPATH: .:backend
+      TANIM_RUNTIME_MODE: postgres
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/tanim_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - name: Install backend dependencies
+        run: python -m pip install -r backend/requirements.txt
+      - name: Upgrade, downgrade, and re-upgrade PostgreSQL/PostGIS schema
+        working-directory: backend
+        run: |
+          alembic -c alembic.ini upgrade head
+          alembic -c alembic.ini downgrade base
+          alembic -c alembic.ini upgrade head
+      - name: Exercise PostgreSQL RLS and append-only policies
+        run: python -m pytest backend/tests/test_postgres_rls.py -q
+
+  frontend-and-browser:
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    env:
+      PYTHONPATH: .:backend
+      TANIM_RUNTIME_MODE: inmemory
+      ALLOW_DEV_AUTH: "true"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: |
+            app/package-lock.json
+            playwright/package-lock.json
+      - name: Install production API dependencies
+        run: python -m pip install -r backend/requirements.txt
+      - name: Install frontend dependencies
+        run: npm --prefix app ci
+      - name: Audit frontend dependencies
+        run: npm --prefix app audit --audit-level=moderate
+      - name: Typecheck and build production frontend
+        run: npm --prefix app run build
+      - name: Run API contract and bundle budget tests
+        run: npm --prefix app test
+      - name: Install Playwright test runner
+        run: npm --prefix playwright ci
+      - name: Audit browser test dependencies
+        run: npm --prefix playwright audit --audit-level=moderate
+      - name: Install Chromium and system dependencies
+        run: npx --prefix playwright playwright install --with-deps chromium
+      - name: Execute mobile, desktop, and axe browser tests
+        run: npm --prefix playwright test -- --project=mobile --project=desktop
+
+  hackathon-web:
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Install frozen hackathon frontend
+        run: npm ci
+      - name: Audit hackathon dependencies
+        run: npm audit --audit-level=moderate
+      - name: Run hackathon request contract tests
+        run: npm test
+      - name: Build hackathon frontend
+        run: npm run build
+
+  live-openstat-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Verify every PSA OpenSTAT table
+        run: python scripts/fetch_openstat_luzon.py --verify-only
+      - name: Audit live crop registry
+        run: python scripts/build_crop_registry.py --check-only
+      - name: Audit yield reference and live sample
+        run: python scripts/build_yield_reference.py --check-only --live-sample
