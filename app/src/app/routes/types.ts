@@ -1,4 +1,4 @@
-export type AppArea = "farmer" | "coordinator" | "reviewer" | "admin" | "platform";
+export type AppArea = "farmer" | "coordinator" | "reviewer" | "admin" | "platform" | "global";
 
 export interface NavigationItem {
   id: string;

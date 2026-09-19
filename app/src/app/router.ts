@@ -5,7 +5,7 @@ export interface ParsedRoute {
   param: string;
 }
 
-const DETAIL_ROUTE_IDS = new Set(["result", "adjust", "crop"]);
+const DETAIL_ROUTE_IDS = new Set(["result", "adjust", "crop", "cplan", "ref", "history"]);
 
 export function parseHash(hash = window.location.hash): ParsedRoute {
   const parts = hash.replace(/^#\/?/, "").split("/");

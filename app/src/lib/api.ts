@@ -9,6 +9,7 @@ import {
   type CoordinationStatus,
   type ErrorCode,
   type NewPlanInput,
+  type Role,
 } from "../types";
 
 export const ACCESS_TOKEN_KEY = "tanim.access_token";
@@ -292,11 +293,15 @@ export function clearSession(): void {
   window.dispatchEvent(new Event("tanim:auth-changed"));
 }
 
-export async function fetchMyRole(organizationId: string): Promise<"farmer" | "reviewer"> {
+export async function fetchMyRole(organizationId: string): Promise<Role> {
   return get("/api/v1/me", (payload) => {
     const root = requiredRecord(payload, "identity");
     const roles = requiredRecord(root.org_roles, "organization roles");
-    return roles[organizationId] === "reviewer" || root.is_platform === true ? "reviewer" : "farmer";
+    const mine = roles[organizationId];
+    if (root.is_platform === true || mine === "org_admin") return "admin";
+    if (mine === "coordinator") return "coordinator";
+    if (mine === "reviewer") return "reviewer";
+    return "farmer";
   });
 }
 

@@ -1,11 +1,18 @@
 import { useCallback, useEffect, useState } from "react";
-import { COORDINATOR_NAVIGATION, FARMER_NAVIGATION } from "./app/routes";
+import { ADMIN_NAVIGATION, COORDINATOR_NAVIGATION, FARMER_NAVIGATION, GLOBAL_NAVIGATION, REVIEWER_NAVIGATION } from "./app/routes";
 import { parseHash } from "./app/router";
 import { CROPS, seedClimate, seedHealth, seedPlans, seedPrices, seedReferences } from "./lib/store";
 import { offlineSnapshotFor } from "./lib/fixtures";
 import { fetchMyRole, fetchReferences, isServerError, transitionReference } from "./lib/api";
 import { AdjustView, Home, MyPlans, NewPlan, Profile, ResultView } from "./views/farmer";
 import { CropDetail, DataHealth, Overview, PlansList, ReferencesView } from "./views/coordinator";
+import { AttentionQueue, CoordinatorPlanDetail } from "./features/coordination/coordination.views";
+import { CoordinatorMap, CoordinatorTimeline, HarvestConcentration, SupplyVsReference } from "./features/context/context.views";
+import { CandidateForm, ReferenceDetail, ReviewQueue } from "./features/evidence/evidence.views";
+import { AdminHome, AuditLog, CalculationPolicy, ConsentPolicy, ExportCenter, Invitations, Members, OrganizationSettings } from "./features/organization/organization.views";
+import { NotificationsInbox } from "./features/notifications/notifications.views";
+import { GlobalSearch } from "./features/search/search.views";
+import { CalculationHistory } from "./features/history/history.views";
 import type { CalculateResponse, Plan, ReferenceRecord, Role } from "./types";
 
 export default function App() {
@@ -97,6 +104,25 @@ export default function App() {
           <a key={item.id} href={item.href} aria-current={route === item.id ? "page" : undefined}>{item.label}</a>
         ))}
       </nav>
+      {role === "reviewer" && (
+        <nav className="tabs" aria-label="Reviewer">
+          {REVIEWER_NAVIGATION.map((item) => (
+            <a key={item.id} href={item.href} aria-current={route === item.id ? "page" : undefined}>{item.label}</a>
+          ))}
+        </nav>
+      )}
+      {role === "admin" && (
+        <nav className="tabs" aria-label="Admin">
+          {ADMIN_NAVIGATION.map((item) => (
+            <a key={item.id} href={item.href} aria-current={route === item.id ? "page" : undefined}>{item.label}</a>
+          ))}
+        </nav>
+      )}
+      <nav className="tabs" aria-label="Global">
+        {GLOBAL_NAVIGATION.map((item) => (
+          <a key={item.id} href={item.href} aria-current={route === item.id ? "page" : undefined}>{item.label}</a>
+        ))}
+      </nav>
       <main id="main" tabIndex={-1}>
         {route === "home" && <Home plans={plans} />}
         {route === "my" && <MyPlans plans={plans} />}
@@ -115,6 +141,33 @@ export default function App() {
         )}
         {route === "references" && <ReferencesView refs={refs} role={role} onTransition={transition} error={referenceError} />}
         {route === "data" && <DataHealth sources={health} />}
+        {route === "attention" && <AttentionQueue />}
+        {route === "cplan" && param && <CoordinatorPlanDetail planId={param} />}
+        {route === "cplan" && !param && <p role="alert">Plan not found. <a href="#/plans">Back to Plans</a>.</p>}
+        {route === "map" && <CoordinatorMap />}
+        {route === "timeline" && (
+          <>
+            <CoordinatorTimeline />
+            <HarvestConcentration />
+          </>
+        )}
+        {route === "review" && <ReviewQueue role={role} />}
+        {route === "ref" && param && <ReferenceDetail refId={param} role={role} />}
+        {route === "ref" && !param && <p role="alert">Reference not found. <a href="#/review">Back to Review queue</a>.</p>}
+        {route === "refnew" && <CandidateForm mode="new" />}
+        {route === "admin" && <AdminHome />}
+        {route === "members" && <Members />}
+        {route === "invitations" && <Invitations />}
+        {route === "organization" && <OrganizationSettings />}
+        {route === "audit" && <AuditLog />}
+        {route === "exports" && <ExportCenter />}
+        {route === "policy" && <CalculationPolicy />}
+        {route === "consent" && <ConsentPolicy />}
+        {route === "notifications" && <NotificationsInbox />}
+        {route === "search" && <GlobalSearch plans={plans} role={role} />}
+        {route === "history" && param && <CalculationHistory planId={param} />}
+        {route === "history" && !param && <p role="alert">Plan not found. <a href="#/my">Back to My Plans</a>.</p>}
+        {route === "crop" && cropEntry && <SupplyVsReference cropCode={cropEntry.code} />}
         <p className="hint" aria-live="polite">Demo data is synthetic and labeled where shown.</p>
       </main>
       <footer>
