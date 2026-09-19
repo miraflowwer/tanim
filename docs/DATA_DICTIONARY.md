@@ -59,6 +59,20 @@ Large requests are split into safe batches. Geographic tables keep available Luz
 
 Use `--check-only` to compare live metadata with the committed registry snapshot.
 
+## Yield reference
+
+[scripts/build_yield_reference.py](../scripts/build_yield_reference.py) builds the historical yield reference from PSA production and harvested-area tables.
+
+Yield is production in metric tons divided by harvested area in hectares. TANIM joins only exact normalized crop labels and matches geography through the audited Luzon region aliases. Production and area tables are resolved independently so their source codes do not need to be identical.
+
+[datasets/generated/yield_reference.csv](../datasets/generated/yield_reference.csv) stores detailed crop-region-year-period values. Rows are kept only when production exists and harvested area is above zero.
+
+[datasets/generated/yield_summary.csv](../datasets/generated/yield_summary.csv) stores the app reference. A crop-region pair is included only when all five Annual values from 2021 through 2025 are present. The file reports the five-year average plus the lowest and highest yearly yield.
+
+Use `--check-only` to audit the committed files. Use `--live-sample` with it to also verify a small current OpenSTAT sample.
+
+See [YIELD_REFERENCE.md](YIELD_REFERENCE.md) for the plain-language explanation.
+
 ## Recent DA price snapshot
 
 [datasets/da_price_monitoring_ncr_latest.csv](../datasets/da_price_monitoring_ncr_latest.csv) is the complete DA NCR weekly report snapshot for 7 to 13 September 2026.

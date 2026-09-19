@@ -22,6 +22,7 @@ jobs:
         run: |
           python tests/test_datasets.py
           python tests/test_crop_registry.py
+          python tests/test_yield_reference.py
           python tests/test_grci.py
 
   live-openstat-audit:
@@ -35,3 +36,5 @@ jobs:
         run: python scripts/fetch_openstat_luzon.py --verify-only
       - name: Audit live crop registry
         run: python scripts/build_crop_registry.py --check-only
+      - name: Audit yield reference
+        run: python scripts/build_yield_reference.py --check-only --live-sample

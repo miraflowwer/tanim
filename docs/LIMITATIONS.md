@@ -15,6 +15,11 @@
 - The fixed demo comparison values are synthetic. They are not observed local market demand.
 - Farm size can be approximate. GRCI calculations carry the stated area margin instead of treating every estimate as exact.
 - TANIM does not set a default real-world farm-size margin yet. A default needs pilot evidence.
+
+- Yield reference uses Annual, Semester, and Quarter periods where both production and harvested area exist. Missing source area remains missing.
+- The app yield summary requires all five Annual values from 2021 to 2025 for a crop-region pair. Partial five-year histories are not promoted into the summary.
+- Yield reference is region-level in this version. It is not province-specific or municipality-specific.
+- Historical yield is a production baseline. It does not prove market demand, glut, or shortage.
 - PAGASA outlook statements can change with later advisories.
 - Open-Meteo values are requested at runtime.
 - NCCAG remains a reference to the official map. Raw GIS layers are not redistributed in this repository.
