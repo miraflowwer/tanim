@@ -6,6 +6,7 @@ Run from the repository root:
     python scripts/generate_openapi.py --check
 """
 import argparse
+import base64
 import json
 import os
 import sys
@@ -32,6 +33,10 @@ def main() -> int:
     if args.check:
         if not OUT.exists() or OUT.read_text(encoding="utf-8") != generated:
             print("openapi/openapi.json differs from FastAPI app.openapi(); regenerate and commit it.")
+            if os.environ.get("GITHUB_ACTIONS") == "true":
+                print("OPENAPI_B64_BEGIN")
+                print(base64.b64encode(generated.encode("utf-8")).decode("ascii"))
+                print("OPENAPI_B64_END")
             return 1
         print("OpenAPI matches FastAPI.")
         return 0
