@@ -1,35 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
+import { COORDINATOR_NAVIGATION, FARMER_NAVIGATION } from "./app/routes";
+import { parseHash } from "./app/router";
 import { CROPS, seedClimate, seedHealth, seedPlans, seedPrices, seedReferences } from "./lib/store";
 import { offlineSnapshotFor } from "./lib/fixtures";
 import { fetchMyRole, fetchReferences, isServerError, transitionReference } from "./lib/api";
 import { AdjustView, Home, MyPlans, NewPlan, Profile, ResultView } from "./views/farmer";
 import { CropDetail, DataHealth, Overview, PlansList, ReferencesView } from "./views/coordinator";
 import type { CalculateResponse, Plan, ReferenceRecord, Role } from "./types";
-
-type Route =
-  | "home" | "my" | "new" | "profile" | "result" | "adjust"
-  | "overview" | "plans" | "crop" | "references" | "data";
-
-const FARMER: { id: Route; label: string }[] = [
-  { id: "home", label: "Home" },
-  { id: "my", label: "My Plans" },
-  { id: "new", label: "New Plan" },
-  { id: "profile", label: "Profile" },
-];
-const COORD: { id: Route; label: string }[] = [
-  { id: "overview", label: "Overview" },
-  { id: "plans", label: "Plans" },
-  { id: "references", label: "References" },
-  { id: "data", label: "Data" },
-];
-
-function parseHash(): { route: Route; param: string } {
-  const parts = window.location.hash.replace(/^#\/?/, "").split("/");
-  const id = (parts[0] || "home") as Route;
-  const known: Route[] = [...FARMER, ...COORD].map((item) => item.id);
-  if (!known.includes(id) && id !== "result" && id !== "adjust" && id !== "crop") return { route: "home", param: "" };
-  return { route: id, param: decodeURIComponent(parts[1] ?? "") };
-}
 
 export default function App() {
   const initialPlans = seedPlans();
@@ -111,13 +88,13 @@ export default function App() {
         <p>Timely Agricultural Network for Informed Market</p>
       </header>
       <nav className="tabs" aria-label="Farmer">
-        {FARMER.map((item) => (
-          <a key={item.id} href={`#/${item.id}`} aria-current={route === item.id ? "page" : undefined}>{item.label}</a>
+        {FARMER_NAVIGATION.map((item) => (
+          <a key={item.id} href={item.href} aria-current={route === item.id ? "page" : undefined}>{item.label}</a>
         ))}
       </nav>
       <nav className="tabs" aria-label="Coordinator">
-        {COORD.map((item) => (
-          <a key={item.id} href={`#/${item.id}`} aria-current={route === item.id ? "page" : undefined}>{item.label}</a>
+        {COORDINATOR_NAVIGATION.map((item) => (
+          <a key={item.id} href={item.href} aria-current={route === item.id ? "page" : undefined}>{item.label}</a>
         ))}
       </nav>
       <main id="main" tabIndex={-1}>
