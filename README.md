@@ -18,4 +18,6 @@ TANIM stands for Timely Agricultural Network for Informed Market. It is a planti
 - [tests/test_crop_registry.py](tests/test_crop_registry.py): crop registry checks
 - [tests/test_yield_reference.py](tests/test_yield_reference.py): yield reference checks
 - [tests/test_grci.py](tests/test_grci.py): GRCI and fixed demo checks
+- [tests/test_mvp_e2e.py](tests/test_mvp_e2e.py): end-to-end demo, edge cases, and safety guards
+- [docs/DEMO_RUNBOOK.md](docs/DEMO_RUNBOOK.md): live demo path and backup plan
 - [LICENSE](LICENSE): MIT license for TANIM code and original project material

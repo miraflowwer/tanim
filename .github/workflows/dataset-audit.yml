@@ -24,6 +24,7 @@ jobs:
           python tests/test_crop_registry.py
           python tests/test_yield_reference.py
           python tests/test_grci.py
+          python tests/test_mvp_e2e.py
 
   live-openstat-audit:
     runs-on: ubuntu-latest
