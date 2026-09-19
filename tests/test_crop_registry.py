@@ -178,6 +178,86 @@ def test_snapshot_audit_detects_removed_crop():
             raise AssertionError("removed crop was not detected")
 
 
+def test_committed_registry_matches_coverage_matrix():
+    registry_path = DS / "generated" / "crop_registry.generated.json"
+    coverage_path = DS / "generated" / "crop_coverage.csv"
+    assert registry_path.exists()
+    assert coverage_path.exists()
+
+    registry = json.loads(registry_path.read_text(encoding="utf-8"))
+    with coverage_path.open(encoding="utf-8", newline="") as handle:
+        rows = list(csv.DictReader(handle))
+
+    crops = registry["crops"]
+    assert registry["crop_count"] == len(crops) == len(rows)
+    assert registry["scope"] == "Luzon"
+    assert registry["planning_rule"] == "production_and_area_required"
+
+    by_id = {crop["crop_id"]: crop for crop in crops}
+    rows_by_id = {row["crop_id"]: row for row in rows}
+    assert set(by_id) == set(rows_by_id)
+    assert {"tomato", "eggplant"} <= set(by_id)
+
+    for crop_id, crop in by_id.items():
+        assert crop["planning_supported"] is True
+        assert crop["coverage"]["production"] is True
+        assert crop["coverage"]["area"] is True
+        row = rows_by_id[crop_id]
+        assert row["production"] == "yes"
+        assert row["area"] == "yes"
+
+    assert rows_by_id["tomato"]["demo_crop"] == "yes"
+    assert rows_by_id["eggplant"]["demo_crop"] == "yes"
+    assert any(row["farmgate"] == "yes" for row in rows)
+    assert any(row["retail"] == "yes" for row in rows)
+    assert any(row["sua_context"] == "yes" for row in rows)
+    assert any(row["nccag_context"] == "yes" for row in rows)
+
+
+def test_snapshot_audit_detects_new_crop():
+    builder = load_builder()
+    committed = {"crops": [{
+        "crop_id": "tomato",
+        "coverage": {
+            "production": True,
+            "area": True,
+            "farmgate": True,
+            "retail": True,
+            "sua": True,
+            "nccag": True,
+        },
+        "nccag": {"available": True, "layer": "Vegetables"},
+        "source_tables": {},
+        "source_labels": {},
+    }]}
+    runtime = {"crops": [
+        committed["crops"][0],
+        {
+            "crop_id": "eggplant",
+            "coverage": {
+                "production": True,
+                "area": True,
+                "farmgate": False,
+                "retail": False,
+                "sua": True,
+                "nccag": True,
+            },
+            "nccag": {"available": True, "layer": "Vegetables"},
+            "source_tables": {},
+            "source_labels": {},
+        },
+    ]}
+    with tempfile.TemporaryDirectory() as directory:
+        path = pathlib.Path(directory) / "snapshot.json"
+        path.write_text(json.dumps(committed), encoding="utf-8")
+        try:
+            builder.audit_committed_snapshot(runtime, path)
+        except RuntimeError as error:
+            assert "new: eggplant" in str(error)
+        else:
+            raise AssertionError("new crop was not detected")
+
+
 def test_demo_farm_size_has_explicit_margin():
     with open(DS / "demo_farm_plans.csv", encoding="utf-8", newline="") as handle:
         rows = list(csv.DictReader(handle))

@@ -16,9 +16,23 @@ The current source tables expose 148 non-food and industrial crop entries, 83 fr
 
 The detailed OpenSTAT crop series begins in 2010. PSA notes that annual 1990 to 2009 data for crops other than palay and corn remain available from the Crops Statistics Division, but those older rows are not exposed by the linked OpenSTAT tables. TANIM does not invent them.
 
+## Explorer crop registry
+
+The live audit currently resolves 313 Explorer planning entries with safe production and area joins.
+
+The committed [Explorer crop coverage](CROP_COVERAGE.md) reports 106 entries with a safe farmgate-price join, 9 with a safe retail-price join, 39 with national SUA context, and 9 with NCCAG context.
+
+These are source entries, not unique biological species. An entry can be a crop, variety, form, or crop product.
+
+A yes means TANIM has a safe exact normalized source-label join or a reviewed manual mapping. A no means no safe join is registered yet. It does not prove that the official source has no related data.
+
+The full machine-readable matrix is [crop_coverage.csv](../datasets/generated/crop_coverage.csv).
+
+The scheduled live audit rebuilds the registry in memory and compares it with the committed snapshot. New, removed, or changed source joins make the audit fail until the snapshot is reviewed and refreshed.
+
 ## Prices
 
-Price coverage now keeps every plant-focused PSA series exposed by the linked price databases.
+Price coverage keeps every plant-focused PSA series exposed by the linked price databases.
 
 Farmgate has 18 plant tables. The current series covers 2010 to 2026 and exposes 197 commodity entries across nine categories. The legacy series covers 1990 to 2020 and exposes 192 commodity entries across the same plant categories. Legacy cutflowers begin in 2006.
 
@@ -36,23 +50,13 @@ Open-Meteo is configured for caller-provided coordinates anywhere in the TANIM L
 
 NCCAG Version 2.0 is not limited to a generic vegetables layer. TANIM references all 21 official crop-suitability layers and the eight climate-change-induced multi-hazards. The map itself is nationwide; TANIM uses it for Luzon locations.
 
-The PAGASA August 2026 summary now keeps Luzon-wide rainfall, soil-moisture, temperature, crop-stage, and September outlook context instead of a CALABARZON-only summary.
+The PAGASA August 2026 summary keeps Luzon-wide rainfall, soil-moisture, temperature, crop-stage, and September outlook context instead of a CALABARZON-only summary.
 
 ## Supply utilization
 
 The PSA Supply Utilization Accounts are national tables. TANIM keeps the seven plant groups in full: rice and corn, rootcrops, vegetables, nuts, fruits, commercial crops, and non-food crops.
 
 These data must not be presented as Luzon demand.
-
-## Cross-source crop joins
-
-Raw source coverage does not mean every crop name can be joined safely across every dataset.
-
-TANIM now uses [crop_registry.json](../datasets/crop_registry.json) and [build_crop_registry.py](../scripts/build_crop_registry.py) to create a safe runtime crop registry.
-
-Automatic joins require the same normalized crop label. A planning crop must have both production and area coverage. Other source families are attached only when the same safe match exists or a reviewed manual override is present.
-
-Similar names, varieties, grades, and partial matches are kept separate. This prevents the wider Explorer mode from producing false cross-source calculations.
 
 ## Scope rule
 
@@ -64,7 +68,7 @@ Some production tables do not publish an NCR row. TANIM keeps every available Lu
 
 The selected official tables contain millions of source cells. The full OpenSTAT corpus is therefore not hand-copied into small CSV files in main.
 
-Instead, main contains the audited 59-table manifest, Luzon filter, crop join rules, price-series policy, tests, and deterministic materializers. Running the materializer downloads every selected official row and keeps only Luzon rows for geographic tables.
+Instead, main contains the audited 59-table manifest, Luzon filter, crop registry, generated Explorer catalog, coverage matrix, price-series policy, tests, and deterministic materializers.
 
 ## Demo rule
 

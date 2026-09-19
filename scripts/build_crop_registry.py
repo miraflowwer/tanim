@@ -353,28 +353,47 @@ def write_summary(path, runtime):
 
 def audit_committed_snapshot(runtime, snapshot_path):
     if not snapshot_path.exists():
-        return
+        raise RuntimeError("Committed Explorer crop registry snapshot is missing")
 
     committed = read_json(snapshot_path)
-    current = {crop["crop_id"]: crop for crop in runtime["crops"]}
-    missing = sorted(
-        crop["crop_id"] for crop in committed.get("crops", [])
-        if crop["crop_id"] not in current
-    )
-    if missing:
+    old_crops = {crop["crop_id"]: crop for crop in committed.get("crops", [])}
+    new_crops = {crop["crop_id"]: crop for crop in runtime["crops"]}
+
+    missing = sorted(set(old_crops) - set(new_crops))
+    added = sorted(set(new_crops) - set(old_crops))
+    if missing or added:
+        parts = []
+        if missing:
+            parts.append("removed: " + ", ".join(missing))
+        if added:
+            parts.append("new: " + ", ".join(added))
         raise RuntimeError(
-            "Previously supported Explorer crops disappeared: " + ", ".join(missing)
+            "Explorer crop catalog changed; refresh the committed snapshot ("
+            + "; ".join(parts)
+            + ")"
         )
 
-    downgraded = []
-    for old in committed.get("crops", []):
-        new = current[old["crop_id"]]
-        for family in ("production", "area"):
-            if old.get("coverage", {}).get(family) and not new["coverage"].get(family):
-                downgraded.append(f"{old['crop_id']}:{family}")
-    if downgraded:
+    changed = []
+    for crop_id in sorted(old_crops):
+        old = old_crops[crop_id]
+        new = new_crops[crop_id]
+        for family in ("production", "area", "farmgate", "retail", "sua", "nccag"):
+            if old.get("coverage", {}).get(family) != new.get("coverage", {}).get(family):
+                changed.append(f"{crop_id}:{family}")
+        if old.get("nccag") != new.get("nccag"):
+            changed.append(f"{crop_id}:nccag_mapping")
+        if old.get("source_tables") != new.get("source_tables"):
+            changed.append(f"{crop_id}:source_tables")
+        if old.get("source_labels") != new.get("source_labels"):
+            changed.append(f"{crop_id}:source_labels")
+
+    if changed:
+        preview = ", ".join(changed[:20])
+        if len(changed) > 20:
+            preview += f", and {len(changed) - 20} more"
         raise RuntimeError(
-            "Required crop coverage was downgraded: " + ", ".join(downgraded)
+            "Explorer crop coverage changed; refresh the committed snapshot: "
+            + preview
         )
 
 
