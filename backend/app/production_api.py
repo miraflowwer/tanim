@@ -186,7 +186,9 @@ def run_db(fn: Callable[[PostgresRepository], Any], *, user: ProductionUser, org
     except KeyError as exc:
         raise api_error(404, "not_found", f"The requested {exc.args[0]} was not found.") from exc
     except ValueError as exc:
-        raise api_error(422, "domain_validation_failed", str(exc)) from exc
+        code = str(exc).strip() or "domain_validation_failed"
+        status = 409 if code in {"duplicate_source_version", "source_version_not_valid", "ingestion_retry_not_safe", "invalid_reference_transition"} else 422
+        raise api_error(status, code, "The request could not be applied.") from exc
     except IntegrityError as exc:
         raise api_error(409, "conflict", "The request conflicts with an existing durable record.") from exc
     except (SQLAlchemyError, RuntimeError, OSError) as exc:
@@ -202,7 +204,9 @@ def run_platform(fn: Callable[[PostgresRepository], Any], *, user: ProductionUse
     except KeyError as exc:
         raise api_error(404, "not_found", f"The requested {exc.args[0]} was not found.") from exc
     except ValueError as exc:
-        raise api_error(422, "domain_validation_failed", str(exc)) from exc
+        code = str(exc).strip() or "domain_validation_failed"
+        status = 409 if code in {"duplicate_source_version", "source_version_not_valid", "ingestion_retry_not_safe", "invalid_reference_transition"} else 422
+        raise api_error(status, code, "The request could not be applied.") from exc
     except IntegrityError as exc:
         raise api_error(409, "conflict", "The request conflicts with an existing durable record.") from exc
     except (SQLAlchemyError, RuntimeError, OSError) as exc:

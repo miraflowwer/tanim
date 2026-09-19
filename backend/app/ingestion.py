@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import os
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
@@ -93,6 +94,8 @@ def validate_rows(
             if value_key is None:
                 raise ValueError("critical_blank")
             value = float(raw[value_key])
+            if not math.isfinite(value):
+                raise ValueError("value_not_finite")
             if value < 0:
                 raise ValueError("negative_value")
             key = (crop, geography.casefold(), period_start, period_end, unit)
