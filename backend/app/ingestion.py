@@ -12,7 +12,7 @@ import json
 import math
 import os
 from dataclasses import dataclass
-from datetime import UTC, date, datetime, timedelta
+from datetime import UTC, date, datetime
 from typing import Any, Iterable
 
 ALLOWED_UNITS = frozenset({"MT", "MT/HA", "MT_PER_HA", "HA"})
