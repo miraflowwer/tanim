@@ -1,0 +1,74 @@
+{
+  "scope_id": "luzon",
+  "description": "Luzon administrative regions used by TANIM when an official PSA table provides geolocation.",
+  "regions": [
+    {
+      "id": "NCR",
+      "aliases": [
+        "NATIONAL CAPITAL REGION",
+        "NATIONAL CAPITAL REGION (NCR)",
+        "NCR - NATIONAL CAPITAL REGION"
+      ]
+    },
+    {
+      "id": "CAR",
+      "aliases": [
+        "CORDILLERA ADMINISTRATIVE REGION",
+        "CORDILLERA ADMINISTRATIVE REGION (CAR)",
+        "CAR - CORDILLERA ADMINISTRATIVE REGION"
+      ]
+    },
+    {
+      "id": "I",
+      "aliases": [
+        "REGION I (ILOCOS REGION)",
+        "I - ILOCOS REGION"
+      ]
+    },
+    {
+      "id": "II",
+      "aliases": [
+        "REGION II (CAGAYAN VALLEY)",
+        "II - CAGAYAN VALLEY"
+      ]
+    },
+    {
+      "id": "III",
+      "aliases": [
+        "REGION III (CENTRAL LUZON)",
+        "III - CENTRAL LUZON"
+      ]
+    },
+    {
+      "id": "IV-A",
+      "aliases": [
+        "REGION IV-A (CALABARZON)",
+        "IV-A - CALABARZON",
+        "CALABARZON"
+      ]
+    },
+    {
+      "id": "MIMAROPA",
+      "aliases": [
+        "MIMAROPA",
+        "MIMAROPA REGION",
+        "REGION IV-B (MIMAROPA)",
+        "REGION IV-B (MIMAROPA REGION)",
+        "IV-B - MIMAROPA",
+        "IV-B - MIMAROPA REGION"
+      ]
+    },
+    {
+      "id": "V",
+      "aliases": [
+        "REGION V (BICOL REGION)",
+        "V - BICOL REGION",
+        "BICOL REGION"
+      ]
+    }
+  ],
+  "includes_region_rows": true,
+  "includes_province_and_city_rows": true,
+  "excludes_national_total": true,
+  "notes": "Some crop-production tables do not publish an NCR row. TANIM keeps every listed Luzon region that exists in each source table and never fabricates an absent region."
+}

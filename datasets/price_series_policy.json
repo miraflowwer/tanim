@@ -1,0 +1,35 @@
+{
+  "policy_id": "psa_price_series_precedence",
+  "verified_as_of": "2026-09-19",
+  "rule": "Keep every official series as a separate raw source. Never overwrite overlapping values. This precedence is only for selecting one series for a continuous TANIM display.",
+  "farmgate": [
+    {
+      "years": "1990-2009",
+      "series_id": "farmgate_legacy_1990_2020",
+      "reason": "Only legacy series covers the full pre-2010 period. Cutflowers begin in 2006."
+    },
+    {
+      "years": "2010-2026",
+      "series_id": "farmgate_current_2010_2026",
+      "reason": "Current PSA series is preferred where it overlaps the legacy series."
+    }
+  ],
+  "retail": [
+    {
+      "years": "1990-2011",
+      "series_id": "retail_legacy_1990_2021",
+      "reason": "Only legacy series covers the full pre-2012 period."
+    },
+    {
+      "years": "2012-2017",
+      "series_id": "retail_revised_2012_2021",
+      "reason": "Revised item specification is preferred before the current 2018 series begins."
+    },
+    {
+      "years": "2018-2026",
+      "series_id": "retail_current_2018_2026",
+      "reason": "Current PSA 2018-based series is preferred where series overlap."
+    }
+  ],
+  "warning": "Commodity names, specifications, geographic codes, and survey series change across vintages. TANIM must retain series_id and source labels when comparing history."
+}

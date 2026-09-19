@@ -1,0 +1,3 @@
+crop_canonical,period,region,demo_qty_mt,demo_yield_mt_per_ha,demand_ha_eq,unit,source_id,data_status
+tomato,2025,CALABARZON (IV-A),375,15.0,25.0,ha_eq,DEMO-2026,derived_demo
+eggplant,2025,CALABARZON (IV-A),180,12.0,15.0,ha_eq,DEMO-2026,derived_demo
