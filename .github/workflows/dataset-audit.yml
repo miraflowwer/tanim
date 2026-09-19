@@ -22,6 +22,7 @@ jobs:
         run: |
           python tests/test_datasets.py
           python tests/test_crop_registry.py
+          python tests/test_grci.py
 
   live-openstat-audit:
     runs-on: ubuntu-latest
