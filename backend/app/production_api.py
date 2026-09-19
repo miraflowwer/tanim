@@ -621,10 +621,14 @@ def run_ingestion(payload: IngestionPayload, request: Request, user: ProductionU
             return {"run": run, "stages": STAGES, "replayed": True}
         crops = {item["code"] for item in repo.list_crops()}
         result = validate_rows(payload.rows, crop_codes=crops)
+        repo.audit(action="ingestion.started", target_kind="ingestion_run", target_id=run["id"], global_event=True)
         repo.update_ingestion(run["id"], {"lifecycle_stage": "validate", "row_count": len(payload.rows), "validation_errors": result.errors, "validation_summary": result.summary, "status": lifecycle_status(result)})
+        repo.audit(action="ingestion.validated", target_kind="ingestion_run", target_id=run["id"], metadata={"valid": result.valid}, global_event=True)
         if not result.valid:
             run_result = repo.update_ingestion(run["id"], {"lifecycle_stage": "monitor", "finished_at": datetime.now(UTC), "error_code": "ingestion_validation_failed"})
             return {"run": run_result, "stages": STAGES, "validation": result.summary, "errors": result.errors, "promoted": False}
+        repo.update_ingestion(run["id"], {"lifecycle_stage": "normalize", "status": "validated"})
+        repo.update_ingestion(run["id"], {"lifecycle_stage": "version"})
         version = repo.create_source_version(source=source, values={"checksum": result.checksum, "payload_ref": "sha256:" + result.checksum, "row_count": len(result.normalized_rows), "validation_status": "valid", "validation_errors": [], "normalization_version": "crop-aliases-v1"})
         repo.update_ingestion(run["id"], {"lifecycle_stage": "stage", "status": "staged", "source_version_id": version["id"], "finished_at": datetime.now(UTC)})
         promoted = False
@@ -636,7 +640,7 @@ def run_ingestion(payload: IngestionPayload, request: Request, user: ProductionU
         return {"run": final_run, "version": version, "stages": STAGES, "validation": result.summary, "promoted": promoted}
     result = run_platform(action, user=user)
     if result.get("run", {}).get("error_code") == "ingestion_validation_failed":
-        return JSONResponse({"code": "ingestion_validation_failed", "message": "The source payload was rejected and the promoted version was unchanged.", "request_id": request_id(request), **result}, status_code=422)
+        return JSONResponse({"code": "ingestion_validation_failed", "message": "The source payload was rejected and the promoted version was unchanged.", "request_id": request_id(request), "details": result}, status_code=422
     return result
 
 @app.get("/api/v1/platform/ingestion")

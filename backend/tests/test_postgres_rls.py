@@ -83,7 +83,7 @@ def ensure_non_privileged_app_role():
                 "yield_references", "comparison_references", "reference_reviews",
                 "price_observations", "climate_context", "weather_observations",
                 "suitability_references", "calculation_runs", "consent_records",
-                "audit_events",
+                "audit_events", "organization_settings", "invitations", "notifications", "exports", "ingestion_runs", "user_sessions", "rate_limit_buckets",
             )
             for table_name in tenant_tables:
                 cur.execute(
@@ -241,6 +241,45 @@ def test_rls_is_enabled_and_application_role_cannot_bypass(tenant_fixture):
     assert forced is True
     assert superuser is False
     assert bypass is False
+
+
+def test_new_tenant_tables_have_forced_rls(tenant_fixture):
+    with app_connection() as conn:
+        with conn.cursor() as cur:
+            for table_name in (
+                "organization_settings",
+                "invitations",
+                "notifications",
+                "exports",
+                "ingestion_runs",
+                "user_sessions",
+            ):
+                cur.execute(
+                    "SELECT relrowsecurity, relforcerowsecurity "
+                    "FROM pg_class WHERE oid = %s::regclass",
+                    (table_name,),
+                )
+                enabled, forced = cur.fetchone()
+                assert enabled is True, table_name
+                assert forced is True, table_name
+
+
+def test_history_tables_have_append_only_triggers(tenant_fixture):
+    with app_connection() as conn:
+        with conn.cursor() as cur:
+            for table_name in (
+                "audit_events",
+                "planting_plan_revisions",
+                "reference_reviews",
+                "calculation_runs",
+            ):
+                cur.execute(
+                    "SELECT count(*) FROM pg_trigger "
+                    "WHERE tgrelid = %s::regclass AND NOT tgisinternal "
+                    "AND tgname LIKE %s",
+                    (table_name, f"tanim_{table_name}_append_only"),
+                )
+                assert cur.fetchone()[0] == 1, table_name
 
 
 def test_wrong_tenant_reads_return_zero_rows(tenant_fixture):
