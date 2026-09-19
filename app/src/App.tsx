@@ -126,6 +126,25 @@ export default function App() {
     );
   }
 
+  // Profile is role-agnostic and hoisted above the role split so a
+  // farmer->reviewer transition never unmounts it mid-interaction
+  // (its sign-in status notice must survive the shell change).
+  if (route === "profile") {
+    const farmerNav = role === "farmer";
+    return (
+      <AppShell navLabel={farmerNav ? "Farmer" : "Coordinator"}
+        nav={farmerNav ? FARMER_NAVIGATION : COORDINATOR_NAVIGATION} current={route}
+        topbarExtra={!farmerNav ? (
+          <RoleDrawer label="Coordinator menu" role="Coordinator" org="Coop Demo Org"
+            items={COORDINATOR_NAVIGATION} current={route} />
+        ) : undefined}
+        bottomNav={farmerNav ? <FarmerBottomNav items={FARMER_NAVIGATION} current={route} /> : undefined}>
+        <Profile />
+        <p className="hint" aria-live="polite">Demo data is synthetic and labeled where shown.</p>
+      </AppShell>
+    );
+  }
+
   const plan = param ? plans.find((item) => item.id === param) : undefined;
   const cropEntry = CROPS.find((crop) => crop.code === (param || "tomato"));
   const isFarmerRoute = FARMER_NAVIGATION.some((item) => item.id === route)
@@ -144,7 +163,6 @@ export default function App() {
         bottomNav={farmerNav ? <FarmerBottomNav items={FARMER_NAVIGATION} current={route} /> : undefined}>
         {route === "overview" && <Overview />}
         {route === "plans" && !farmerNav && <PlansList plans={plans} />}
-        {route === "profile" && <Profile />}
         {route === "crop" && cropEntry && (
           <CropDetail cropCode={cropEntry.code} cropName={cropEntry.name}
             prices={prices} climate={climate} />
@@ -163,7 +181,6 @@ export default function App() {
       {route === "plans" && <MyPlans plans={plans} />}
       {route === "plan-new" && <NewPlan onSavePlan={savePlan} />}
       {route === "plan-detail" && <PlanDetail planId={param} latest={param ? results[param] : undefined} />}
-      {route === "profile" && <Profile />}
       {route === "privacy" && <PrivacyView />}
       {route === "crops" && <CropExplorer />}
       {route === "crop-detail" && <CropDetailView cropCode={param} />}
