@@ -2,6 +2,12 @@
 
 This is the status of PR #7's Phase A foundation, not a production release approval. A checked item needs executed evidence. CI on a disposable GitHub runner verifies code and migration behavior; it does not replace staging, operational, or privacy review.
 
+## Review evidence
+
+The [PR checks](https://github.com/miraflowwer/tanim/pull/7/checks) must show a completed run attached to the current head of `feat/p0-foundation`. A run marked `action_required`, cancelled, or attached only to an earlier SHA does not count as final-head verification. CI uses a fresh GitHub runner checkout and executes the Python, PostgreSQL/PostGIS, frontend/browser, hackathon-web, and live OpenSTAT jobs. The branch contains source and lockfiles only; runner installs and browser binaries are disposable.
+
+This ledger records automation and implementation evidence for Phase A. Staging migration, restore, rollout, privacy, and ethical review gates remain open for a production release.
+
 - [x] 1. All required foundation CI checks pass: Python, PostgreSQL/PostGIS, frontend/browser, hackathon web, and live OpenSTAT passed in [CI run 35464093454](https://github.com/miraflowwer/tanim/actions/runs/35464093454). A rewritten head must pass the same suite.
 - [x] 2. Mobile and desktop browser E2E passes: 36 real Playwright tests passed, including API-backed flows, in [CI run 35464093454](https://github.com/miraflowwer/tanim/actions/runs/35464093454).
 - [x] 3. Accessibility automation passes: executed axe, keyboard, focus, landmarks, errors, 200% page scale, 320/375 px, and 44 px target checks in both browser projects. This is automation evidence, not a manual accessibility review.
