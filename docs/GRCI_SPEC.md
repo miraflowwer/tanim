@@ -23,7 +23,7 @@ Farm size can be an estimate.
 Let $A$ be the estimated farm size in hectares. Let $M$ be the plus-or-minus margin.
 
 $$
-A_{low} = \\max(0, A - M)
+A_{low} = \max(0, A - M)
 $$
 
 $$
@@ -36,12 +36,26 @@ For several farmers, TANIM adds the lower values and the upper values separately
 
 The fixed demo uses a zero margin because its inputs are controlled. TANIM does not set a default real-world margin yet.
 
+## Historical yield reference
+
+TANIM can load a regional historical yield from [../datasets/generated/yield_summary.csv](../datasets/generated/yield_summary.csv).
+
+The reference window is 2021 to 2025. A crop-region row needs all five Annual years. The `n_years` field is 5 in the committed summary.
+
+The loader validates the file schema, duplicate crop-region keys, finite numbers, year count, unit, and source fields before it returns a record.
+
+A missing crop-region yield stays missing. TANIM does not copy a value from another crop or region.
+
+Historical yield is a production reference. It is not market demand.
+
+See [YIELD_REFERENCE.md](YIELD_REFERENCE.md) for the source method and limits.
+
 ## Planned supply
 
 TANIM converts planned area to planned supply when a valid reference yield is available.
 
 $$
-\\text{Planned supply} = \\text{Planned area} \\times \\text{Reference yield}
+\text{Planned supply} = \text{Planned area} \times \text{Reference yield}
 $$
 
 Planned supply is measured in metric tons, or MT.
@@ -49,6 +63,24 @@ Planned supply is measured in metric tons, or MT.
 If planned area is 18 ha to 22 ha and reference yield is 15 MT/ha, planned supply is 270 MT to 330 MT.
 
 The result must include the source of the reference yield.
+
+When a validated yield-summary record is supplied, the engine also checks that its crop, unit, average yield, reference period, and source are consistent with the numeric yield used in the calculation.
+
+## Estimated range wording
+
+Every value that depends on an approximate farm size is shown as an estimated range.
+
+For example:
+
+Estimated range: 1.8 ha to 2.2 ha
+
+At 15 MT/ha:
+
+Estimated range: 27 MT to 33 MT
+
+This is not a statistical confidence interval. The range comes from the farm-size margin supplied with the plan.
+
+Use `format_estimated_range` so interfaces use the same wording.
 
 ## Reference amount
 
@@ -69,7 +101,7 @@ These fields make the limits of the comparison visible.
 For a reference that can be compared with planned supply:
 
 $$
-\\text{Supply load} = \\frac{\\text{Planned supply in MT}}{\\text{Reference amount in MT}}
+\text{Supply load} = \frac{\text{Planned supply in MT}}{\text{Reference amount in MT}}
 $$
 
 A value of 1.0 means planned supply equals the reference amount.
@@ -102,31 +134,41 @@ These values keep the demo reproducible. They are not approved production thresh
 
 `comparison_state` stores the band from any valid comparison.
 
-`risk_state` is used only when the reference mode supports a GRCI risk interpretation. Historical production keeps `risk_state` empty and uses only `comparison_state`.
+`risk_state` is used only when the reference mode supports a risk interpretation. Historical production keeps `risk_state` empty and uses only `comparison_state`.
 
 National utilization context produces neither state.
 
 If a range crosses two bands, the state is `borderline`.
 
-## Estimated range wording
-
-Farm-size margins are user estimates. TANIM labels values derived from them as an Estimated range. It does not call them confidence intervals.
-
-For example, 2.0 ha with a 0.2 ha margin is shown as `Estimated range: 1.8 ha to 2.2 ha`.
-
 ## Result status
 
 `status` describes what the engine could safely produce.
 
-- `ok`: a GRCI risk result is available
+- `ok`: a risk or proxy-risk comparison is available
 - `baseline`: a historical production comparison is available, but it is not a demand-based risk result
 - `context_only`: the reference is shown as context and is not used for a local ratio
-- `unclassified`: a valid ratio exists but risk bands are not configured
+- `unclassified`: a valid ratio exists but comparison bands are not configured
 - `incomplete`: a required value is missing
-- `invalid`: a value, unit, reference type, geography, or plan context is not usable
+- `invalid`: a value, unit, reference type, geography, provenance record, or plan context is not usable
 - `unsupported`: the crop does not have a safe production and area join
 
 Data quality and risk level are separate.
+
+## Explanation and provenance
+
+Each result includes a plain-language `explanation` and machine-readable `provenance`.
+
+The explanation must follow the reference mode.
+
+A historical production baseline is described as a baseline comparison, not as market demand.
+
+National utilization is described as context only.
+
+A local historical absorption reference is identified as a proxy.
+
+The synthetic demo is identified as a demo result.
+
+When a yield-summary record is passed, provenance can include crop, region, reference window, number of years, unit, source id, and the exact yield source used.
 
 ## Fixed demo fixture
 
@@ -146,8 +188,6 @@ The baseline file states its reference type, geography, period, and synthetic st
 
 ## Output contract
 
-A result includes the plan context, planned-area range, reference yield and source, planned-supply range, expected-production range, reference amount and unit, reference type, geography, period, reference label, evidence note, reference quality, reference mode, supply-load range when allowed, calculation status, comparison state, risk state when allowed, uncertainty state, uncertainty note, explanation, provenance, and source labels.
+A result includes the plan context, planned-area range, reference yield and source, planned-supply range, expected-production range, reference amount and unit, reference type, geography, period, reference label, evidence note, reference quality, reference mode, supply-load range when allowed, calculation status, comparison state, risk state when allowed, uncertainty state, uncertainty note, plain-language explanation, provenance, and source labels.
 
-`expected_production_range` is the same numeric range as planned supply. `uncertainty_state` is `point`, `range`, or `borderline` after area can be calculated. Provenance keeps the exact yield and comparison reference metadata used by the engine.
-
-The interface must show the reference label and evidence note. It must not infer stronger evidence than the result provides. Historical production remains a baseline, national utilization remains context only, and only committed local demand may use direct market-demand wording.
+The interface must show the reference label and evidence note. It must not infer stronger evidence than the result provides.

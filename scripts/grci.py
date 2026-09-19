@@ -9,6 +9,7 @@ import csv
 import math
 import pathlib
 
+
 YIELD_SUMMARY_DEFAULT = (
     pathlib.Path(__file__).resolve().parents[1]
     / "datasets"
@@ -16,6 +17,22 @@ YIELD_SUMMARY_DEFAULT = (
     / "yield_summary.csv"
 )
 
+YIELD_SUMMARY_FIELDS = [
+    "crop_id",
+    "display_name",
+    "region_id",
+    "region_label",
+    "ref_period",
+    "n_years",
+    "avg_yield_mt_per_ha",
+    "min_yield_mt_per_ha",
+    "max_yield_mt_per_ha",
+    "unit",
+    "source_id",
+    "data_status",
+]
+
+YIELD_REGION_IDS = {"NCR", "CAR", "I", "II", "III", "IV-A", "MIMAROPA", "V"}
 
 REFERENCE_TYPES = {
     "local_committed_demand": {
@@ -133,6 +150,8 @@ def normalize_source_labels(source_labels):
 
 
 def _finite_number(value, name):
+    if isinstance(value, bool):
+        raise ValueError(f"{name} must be a number")
     try:
         number = float(value)
     except (TypeError, ValueError) as error:
@@ -199,6 +218,13 @@ def collective_area_range(plans):
 
 def planned_supply_range(area_low, area_high, yield_mt_per_ha):
     """Convert an area range into an expected supply range in MT."""
+    low = _finite_number(area_low, "area lower value")
+    high = _finite_number(area_high, "area upper value")
+    if low < 0 or high < 0:
+        raise ValueError("area values must be non-negative")
+    if high < low:
+        raise ValueError("area upper value must not be below the lower value")
+
     if yield_mt_per_ha is None:
         return None
     try:
@@ -207,14 +233,18 @@ def planned_supply_range(area_low, area_high, yield_mt_per_ha):
         return None
     if yield_value <= 0:
         return None
-    return (
-        float(area_low) * yield_value,
-        float(area_high) * yield_value,
-    )
+    return (low * yield_value, high * yield_value)
 
 
 def supply_load_range(supply_low, supply_high, reference_amount):
     """Compare planned supply with a positive reference amount."""
+    low = _finite_number(supply_low, "supply lower value")
+    high = _finite_number(supply_high, "supply upper value")
+    if low < 0 or high < 0:
+        raise ValueError("supply values must be non-negative")
+    if high < low:
+        raise ValueError("supply upper value must not be below the lower value")
+
     if reference_amount is None:
         return None
     try:
@@ -223,10 +253,7 @@ def supply_load_range(supply_low, supply_high, reference_amount):
         return None
     if reference <= 0:
         return None
-    return (
-        float(supply_low) / reference,
-        float(supply_high) / reference,
-    )
+    return (low / reference, high / reference)
 
 
 def validate_bands(bands):
@@ -243,6 +270,8 @@ def validate_bands(bands):
             raise ValueError("each risk band must contain an upper limit and label")
 
         upper_raw, label_raw = item
+        if isinstance(upper_raw, bool):
+            raise ValueError("risk band upper limits must be numbers")
         try:
             upper = float(upper_raw)
         except (TypeError, ValueError) as error:
@@ -286,82 +315,150 @@ def classify_load(value, bands):
 
 def classify_range(low, high, bands):
     """Classify a load range and report whether it crosses a band."""
+    low_number = _finite_number(low, "supply-load lower value")
+    high_number = _finite_number(high, "supply-load upper value")
+    if low_number < 0 or high_number < 0:
+        raise ValueError("supply-load values must be non-negative")
+    if high_number < low_number:
+        raise ValueError(
+            "supply-load upper value must not be below the lower value"
+        )
+
     validated = validate_bands(bands)
-    low_band = _classify_validated(low, validated)
-    high_band = _classify_validated(high, validated)
+    low_band = _classify_validated(low_number, validated)
+    high_band = _classify_validated(high_number, validated)
     return (low_band, high_band, low_band != high_band)
 
 
 def format_estimated_range(low, high, unit):
-    """Format a user-estimated range without implying statistical confidence."""
+    """Format an estimated low-to-high range for the interface."""
     low_number = _finite_number(low, "range lower value")
     high_number = _finite_number(high, "range upper value")
+    unit_text = str(unit).strip() if unit is not None else ""
     if low_number < 0 or high_number < 0:
         raise ValueError("range values must be non-negative")
     if high_number < low_number:
         raise ValueError("range upper value must not be below the lower value")
-    unit_text = str(unit).strip()
     if not unit_text:
-        raise ValueError("range unit must not be empty")
-    return f"Estimated range: {low_number:g} {unit_text} to {high_number:g} {unit_text}"
+        raise ValueError("range unit cannot be empty")
+    return (
+        f"Estimated range: {low_number:g} {unit_text} "
+        f"to {high_number:g} {unit_text}"
+    )
 
 
 def load_yield_summary(path=None):
-    """Load and strictly validate the generated yield summary."""
+    """Load and validate the committed regional yield summary."""
     target = pathlib.Path(path) if path is not None else YIELD_SUMMARY_DEFAULT
     with target.open(encoding="utf-8", newline="") as handle:
         reader = csv.DictReader(handle)
-        required = {
-            "crop_id", "display_name", "region_id", "region_label",
-            "ref_period", "n_years", "avg_yield_mt_per_ha",
-            "min_yield_mt_per_ha", "max_yield_mt_per_ha",
-            "unit", "source_id", "data_status",
-        }
-        if set(reader.fieldnames or []) != required:
-            raise ValueError("yield summary schema is not the expected TANIM schema")
-        rows = list(reader)
+        if reader.fieldnames != YIELD_SUMMARY_FIELDS:
+            raise ValueError(
+                f"yield summary schema changed: {reader.fieldnames}"
+            )
 
-    index = {}
-    for row in rows:
-        key = (row["crop_id"].strip(), row["region_id"].strip())
-        if not all(key):
-            raise ValueError("yield summary crop_id and region_id must not be empty")
-        if key in index:
-            raise ValueError(f"duplicate yield summary row for {key}")
-        n_years = int(row["n_years"])
-        avg = _finite_number(row["avg_yield_mt_per_ha"], "average yield")
-        minimum = _finite_number(row["min_yield_mt_per_ha"], "minimum yield")
-        maximum = _finite_number(row["max_yield_mt_per_ha"], "maximum yield")
-        if n_years <= 0 or minimum < 0 or avg < 0 or maximum < 0:
-            raise ValueError(f"invalid yield summary values for {key}")
-        if not minimum <= avg <= maximum:
-            raise ValueError(f"yield summary range is inconsistent for {key}")
-        if row["unit"] != "mt_per_ha":
-            raise ValueError(f"unexpected yield unit for {key}")
-        index[key] = {
-            "crop_id": key[0], "display_name": row["display_name"],
-            "region_id": key[1], "region_label": row["region_label"],
-            "ref_period": row["ref_period"], "n_years": n_years,
-            "avg_yield_mt_per_ha": avg,
-            "min_yield_mt_per_ha": minimum,
-            "max_yield_mt_per_ha": maximum,
-            "unit": row["unit"], "source_id": row["source_id"],
-            "data_status": row["data_status"],
-        }
+        index = {}
+        for line_number, row in enumerate(reader, start=2):
+            crop_id = row["crop_id"].strip()
+            region_id = row["region_id"].strip()
+            if not crop_id or not region_id:
+                raise ValueError(
+                    f"yield summary row {line_number} has a missing key"
+                )
+
+            if not row["display_name"].strip():
+                raise ValueError(
+                    f"yield summary row {line_number} has no display name"
+                )
+            if region_id not in YIELD_REGION_IDS:
+                raise ValueError(
+                    f"yield summary row {line_number} has an invalid region id"
+                )
+            if not row["region_label"].strip():
+                raise ValueError(
+                    f"yield summary row {line_number} has no region label"
+                )
+
+            key = (crop_id, region_id)
+            if key in index:
+                raise ValueError(
+                    f"yield summary has duplicate key {crop_id}/{region_id}"
+                )
+
+            try:
+                n_years = int(row["n_years"])
+            except (TypeError, ValueError) as error:
+                raise ValueError(
+                    f"yield summary row {line_number} has a bad year count"
+                ) from error
+
+            avg = _finite_number(
+                row["avg_yield_mt_per_ha"],
+                f"yield summary row {line_number} average",
+            )
+            low = _finite_number(
+                row["min_yield_mt_per_ha"],
+                f"yield summary row {line_number} minimum",
+            )
+            high = _finite_number(
+                row["max_yield_mt_per_ha"],
+                f"yield summary row {line_number} maximum",
+            )
+
+            if n_years != 5:
+                raise ValueError(
+                    f"yield summary row {line_number} must use all five years"
+                )
+            if avg <= 0 or low < 0 or high < 0 or not low <= avg <= high:
+                raise ValueError(
+                    f"yield summary row {line_number} has invalid yield values"
+                )
+            if row["unit"].strip() != "mt_per_ha":
+                raise ValueError(
+                    f"yield summary row {line_number} has an invalid unit"
+                )
+            if row["ref_period"].strip() != "2021-2025":
+                raise ValueError(
+                    f"yield summary row {line_number} has an invalid reference period"
+                )
+            if row["source_id"].strip() != "PSA-OPENSTAT-CROPS":
+                raise ValueError(
+                    f"yield summary row {line_number} has an invalid source id"
+                )
+            if row["data_status"].strip() != "observed":
+                raise ValueError(
+                    f"yield summary row {line_number} has an invalid data status"
+                )
+
+            index[key] = {
+                "crop_id": crop_id,
+                "display_name": row["display_name"].strip(),
+                "region_id": region_id,
+                "region_label": row["region_label"].strip(),
+                "ref_period": row["ref_period"].strip(),
+                "n_years": n_years,
+                "avg_yield_mt_per_ha": avg,
+                "min_yield_mt_per_ha": low,
+                "max_yield_mt_per_ha": high,
+                "unit": row["unit"].strip(),
+                "source_id": row["source_id"].strip(),
+                "data_status": row["data_status"].strip(),
+            }
+
+    if not index:
+        raise ValueError("yield summary is empty")
     return index
 
 
 def reference_yield_for(index, crop_id, region_id):
-    """Return one crop-region yield record, or None when unavailable."""
+    """Return one crop-region yield record, or None when it is absent."""
     if not isinstance(index, dict):
         raise ValueError("yield summary index must be a dict")
-    return index.get((str(crop_id).strip(), str(region_id).strip()))
-
-
-def _describe_amount(low, high, unit):
-    if low == high:
-        return f"{low:g} {unit}"
-    return f"{low:g} to {high:g} {unit}"
+    crop_key = str(crop_id).strip() if crop_id is not None else ""
+    region_key = str(region_id).strip() if region_id is not None else ""
+    if not crop_key or not region_key:
+        return None
+    return index.get((crop_key, region_key))
 
 
 def is_planning_supported(crop_record):
@@ -371,7 +468,10 @@ def is_planning_supported(crop_record):
 
     coverage = crop_record.get("coverage")
     if isinstance(coverage, dict):
-        required = bool(coverage.get("production")) and bool(coverage.get("area"))
+        required = (
+            coverage.get("production") is True
+            and coverage.get("area") is True
+        )
         if "planning_supported" in crop_record:
             return required and crop_record.get("planning_supported") is True
         return required
@@ -415,6 +515,59 @@ def _result_base(crop, location, harvest_period):
     }
 
 
+def _describe_amount(low, high, unit):
+    if low == high:
+        return f"{low:g} {unit}"
+    return f"{low:g} to {high:g} {unit}"
+
+
+def _explain_no_result(note):
+    return f"No result can be shown. {note}"
+
+
+def _validate_yield_record(yield_record, crop, yield_value):
+    if yield_record is None:
+        return None
+    if not isinstance(yield_record, dict):
+        return "Yield provenance must be a record."
+
+    record_crop = str(yield_record.get("crop_id", "")).strip()
+    if not record_crop or not _same_text(record_crop, crop):
+        return "Yield provenance belongs to a different crop."
+
+    record_region = str(yield_record.get("region_id", "")).strip()
+    if record_region not in YIELD_REGION_IDS:
+        return "Yield provenance has an invalid region id."
+
+    if str(yield_record.get("unit", "")).strip() != "mt_per_ha":
+        return "Yield provenance must use mt_per_ha."
+
+    try:
+        record_yield = _finite_number(
+            yield_record.get("avg_yield_mt_per_ha"),
+            "yield provenance average",
+        )
+    except ValueError:
+        return "Yield provenance has an invalid average yield."
+
+    if not math.isclose(record_yield, yield_value, rel_tol=0.0, abs_tol=1e-9):
+        return "Reference yield does not match the supplied yield provenance."
+
+    if str(yield_record.get("source_id", "")).strip() != "PSA-OPENSTAT-CROPS":
+        return "Yield provenance has an invalid source id."
+    if str(yield_record.get("ref_period", "")).strip() != "2021-2025":
+        return "Yield provenance has an invalid reference period."
+    try:
+        n_years = int(yield_record.get("n_years"))
+    except (TypeError, ValueError):
+        return "Yield provenance has an invalid year count."
+    if n_years != 5:
+        return "Yield provenance must use all five reference years."
+    if str(yield_record.get("data_status", "")).strip() != "observed":
+        return "Yield provenance must come from observed source data."
+    return None
+
+
 def compute_grci(
     *,
     crop,
@@ -435,15 +588,24 @@ def compute_grci(
 ):
     """Compute one reproducible GRCI result."""
     result = _result_base(crop, location, harvest_period)
+
+    canonical_reference = normalize_reference_type(reference_type)
+    clean_sources = normalize_source_labels(source_labels)
+    clean_yield_source = (
+        str(yield_source).strip() if yield_source is not None else None
+    )
+    if clean_yield_source == "":
+        clean_yield_source = None
+
     result["reference_yield"] = reference_yield
-    result["yield_source"] = yield_source
+    result["yield_source"] = clean_yield_source
     result["reference_amount"] = reference_amount
     result["reference_unit"] = (
         str(reference_unit).strip().upper()
         if reference_unit is not None
         else None
     )
-    result["reference_type"] = normalize_reference_type(reference_type)
+    result["reference_type"] = canonical_reference
     result["reference_geography"] = (
         str(reference_geography).strip()
         if reference_geography is not None
@@ -454,22 +616,51 @@ def compute_grci(
         if reference_period is not None
         else None
     )
-    result["source_labels"] = normalize_source_labels(source_labels)
+    result["source_labels"] = clean_sources
     result["provenance"] = {
-        "yield_source": yield_source,
-        "yield_ref_period": yield_record.get("ref_period") if isinstance(yield_record, dict) else None,
-        "yield_unit": yield_record.get("unit") if isinstance(yield_record, dict) else None,
-        "reference_type": result["reference_type"],
+        "yield_source": clean_yield_source,
+        "yield_crop_id": (
+            yield_record.get("crop_id")
+            if isinstance(yield_record, dict)
+            else None
+        ),
+        "yield_region_id": (
+            yield_record.get("region_id")
+            if isinstance(yield_record, dict)
+            else None
+        ),
+        "yield_ref_period": (
+            yield_record.get("ref_period")
+            if isinstance(yield_record, dict)
+            else None
+        ),
+        "yield_n_years": (
+            yield_record.get("n_years")
+            if isinstance(yield_record, dict)
+            else None
+        ),
+        "yield_unit": (
+            yield_record.get("unit")
+            if isinstance(yield_record, dict)
+            else None
+        ),
+        "yield_source_id": (
+            yield_record.get("source_id")
+            if isinstance(yield_record, dict)
+            else None
+        ),
+        "reference_type": canonical_reference,
         "reference_amount": reference_amount,
         "reference_unit": result["reference_unit"],
         "reference_geography": result["reference_geography"],
         "reference_period": result["reference_period"],
-        "source_labels": list(result["source_labels"]),
+        "source_labels": clean_sources,
     }
 
     if crop is None or not str(crop).strip():
         result["status"] = "incomplete"
         result["uncertainty_note"] = "Missing crop."
+        result["explanation"] = _explain_no_result("Missing crop.")
         return result
 
     if not is_planning_supported(crop_record):
@@ -478,21 +669,27 @@ def compute_grci(
             "Crop does not have a safe production and area join in the "
             "TANIM crop registry."
         )
+        result["explanation"] = _explain_no_result(
+            "The crop has no safe production and area join."
+        )
         return result
 
     if location is None or not str(location).strip():
         result["status"] = "incomplete"
         result["uncertainty_note"] = "Missing location."
+        result["explanation"] = _explain_no_result("Missing location.")
         return result
 
     if harvest_period is None or not str(harvest_period).strip():
         result["status"] = "incomplete"
         result["uncertainty_note"] = "Missing harvest period."
+        result["explanation"] = _explain_no_result("Missing harvest period.")
         return result
 
     if not plans:
         result["status"] = "incomplete"
         result["uncertainty_note"] = "No farm plans provided."
+        result["explanation"] = _explain_no_result("No farm plans were given.")
         return result
 
     context_ok, context_error = validate_plan_context(
@@ -504,22 +701,25 @@ def compute_grci(
     if not context_ok:
         result["status"] = "invalid"
         result["uncertainty_note"] = context_error
+        result["explanation"] = _explain_no_result(context_error)
         return result
 
-    canonical_reference = normalize_reference_type(reference_type)
     if canonical_reference is None:
         result["status"] = "incomplete"
         result["uncertainty_note"] = "Missing reference type."
+        result["explanation"] = _explain_no_result("The reference type is missing.")
         return result
 
     metadata = reference_metadata(canonical_reference)
     if metadata is None:
-        result["status"] = "invalid"
-        result["uncertainty_note"] = (
+        note = (
             "Unknown reference type. Expected one of: "
             + ", ".join(valid_reference_types())
             + "."
         )
+        result["status"] = "invalid"
+        result["uncertainty_note"] = note
+        result["explanation"] = _explain_no_result(note)
         return result
 
     result["reference_label"] = metadata["label"]
@@ -530,78 +730,119 @@ def compute_grci(
     result["market_demand_wording_allowed"] = metadata[
         "market_demand_wording_allowed"
     ]
-    result["provenance"].update({
-        "reference_label": metadata["label"],
-        "reference_quality": metadata["quality"],
-        "reference_scope": metadata["scope"],
-        "reference_mode": metadata["comparison_mode"],
-    })
+    result["provenance"]["reference_label"] = metadata["label"]
+    result["provenance"]["reference_evidence_note"] = metadata["evidence_note"]
+    result["provenance"]["reference_quality"] = metadata["quality"]
+    result["provenance"]["reference_mode"] = metadata["comparison_mode"]
+
+    if not clean_sources:
+        note = "Missing comparison-reference source label."
+        result["status"] = "incomplete"
+        result["uncertainty_note"] = note
+        result["explanation"] = _explain_no_result(note)
+        return result
 
     if result["reference_unit"] != "MT":
+        note = "Reference amount must use MT so it matches planned supply."
         result["status"] = "invalid"
-        result["uncertainty_note"] = (
-            "Reference amount must use MT so it matches planned supply."
-        )
+        result["uncertainty_note"] = note
+        result["explanation"] = _explain_no_result(note)
         return result
 
     if not result["reference_geography"]:
         result["status"] = "incomplete"
         result["uncertainty_note"] = "Missing reference geography."
+        result["explanation"] = _explain_no_result(
+            "The reference geography is missing."
+        )
         return result
 
     if not result["reference_period"]:
         result["status"] = "incomplete"
         result["uncertainty_note"] = "Missing reference period."
+        result["explanation"] = _explain_no_result(
+            "The reference period is missing."
+        )
         return result
 
     if metadata["scope"] == "national":
         if "philipp" not in result["reference_geography"].casefold():
-            result["status"] = "invalid"
-            result["uncertainty_note"] = (
+            note = (
                 "National utilization context must keep its national geography."
             )
+            result["status"] = "invalid"
+            result["uncertainty_note"] = note
+            result["explanation"] = _explain_no_result(note)
             return result
 
     if metadata["scope"] == "local":
         if "philipp" in result["reference_geography"].casefold():
+            note = "A local reference cannot use a national geography."
             result["status"] = "invalid"
-            result["uncertainty_note"] = (
-                "A local reference cannot use a national geography."
-            )
+            result["uncertainty_note"] = note
+            result["explanation"] = _explain_no_result(note)
             return result
 
     try:
         area_low, area_high = collective_area_range(plans)
     except (ValueError, KeyError, TypeError):
+        note = "Invalid farm size or farm-size margin."
         result["status"] = "invalid"
-        result["uncertainty_note"] = "Invalid farm size or farm-size margin."
+        result["uncertainty_note"] = note
+        result["explanation"] = _explain_no_result(
+            "A farm size or margin value is not usable."
+        )
         return result
 
     result["planned_area_range"] = [area_low, area_high]
-    result["uncertainty_state"] = "point" if area_low == area_high else "range"
+    result["uncertainty_state"] = (
+        "point" if area_low == area_high else "range"
+    )
 
     if reference_yield is None:
+        note = "Missing reference yield. Planned supply cannot be calculated."
         result["status"] = "incomplete"
-        result["uncertainty_note"] = (
-            "Missing reference yield. Planned supply cannot be calculated."
+        result["uncertainty_note"] = note
+        result["explanation"] = _explain_no_result(
+            "The reference yield is missing, so expected production "
+            "cannot be calculated."
         )
         return result
 
     try:
         yield_value = _finite_number(reference_yield, "reference yield")
     except ValueError:
+        note = "Reference yield must be a valid number."
         result["status"] = "invalid"
-        result["uncertainty_note"] = "Reference yield must be a valid number."
+        result["uncertainty_note"] = note
+        result["explanation"] = _explain_no_result(note)
         return result
 
     if yield_value <= 0:
+        note = "Reference yield must be greater than zero."
         result["status"] = "invalid"
-        result["uncertainty_note"] = "Reference yield must be greater than zero."
+        result["uncertainty_note"] = note
+        result["explanation"] = _explain_no_result(note)
         return result
 
-    if yield_source is None or not str(yield_source).strip():
+    if clean_yield_source is None:
+        note = "Missing reference-yield source."
         result["status"] = "incomplete"
-        result["uncertainty_note"] = "Missing reference-yield source."
+        result["uncertainty_note"] = note
+        result["explanation"] = _explain_no_result(
+            "The reference-yield source is missing."
+        )
+        return result
+
+    yield_record_error = _validate_yield_record(
+        yield_record,
+        crop,
+        yield_value,
+    )
+    if yield_record_error:
+        result["status"] = "invalid"
+        result["uncertainty_note"] = yield_record_error
+        result["explanation"] = _explain_no_result(yield_record_error)
         return result
 
     supply = planned_supply_range(area_low, area_high, yield_value)
@@ -609,22 +850,31 @@ def compute_grci(
     result["expected_production_range"] = list(supply)
 
     if reference_amount is None:
+        note = "Missing reference amount. Supply load cannot be calculated."
         result["status"] = "incomplete"
-        result["uncertainty_note"] = (
-            "Missing reference amount. Supply load cannot be calculated."
+        result["uncertainty_note"] = note
+        result["explanation"] = (
+            f"Planned area is {_describe_amount(area_low, area_high, 'ha')}. "
+            f"At {yield_value:g} MT per ha, expected production is "
+            f"{_describe_amount(supply[0], supply[1], 'MT')}. "
+            "The comparison reference is missing, so no comparison is shown."
         )
         return result
 
     try:
         reference_value = _finite_number(reference_amount, "reference amount")
     except ValueError:
+        note = "Reference amount must be a valid number."
         result["status"] = "invalid"
-        result["uncertainty_note"] = "Reference amount must be a valid number."
+        result["uncertainty_note"] = note
+        result["explanation"] = _explain_no_result(note)
         return result
 
     if reference_value <= 0:
+        note = "Reference amount must be greater than zero."
         result["status"] = "invalid"
-        result["uncertainty_note"] = "Reference amount must be greater than zero."
+        result["uncertainty_note"] = note
+        result["explanation"] = _explain_no_result(note)
         return result
 
     if metadata["comparison_mode"] == "context_only":
@@ -637,7 +887,8 @@ def compute_grci(
             f"Planned area is {_describe_amount(area_low, area_high, 'ha')}. "
             f"At {yield_value:g} MT per ha, expected production is "
             f"{_describe_amount(supply[0], supply[1], 'MT')}. "
-            "The national utilization value is context only and is not used as local demand."
+            f"{metadata['label']} is shown only as context. "
+            f"{metadata['evidence_note']}"
         )
         return result
 
@@ -651,9 +902,12 @@ def compute_grci(
             "has no comparison label."
         )
         result["explanation"] = (
-            f"Expected production is {_describe_amount(supply[0], supply[1], 'MT')}. "
-            f"The comparison ratio is {_describe_amount(load[0], load[1], 'ratio')}. "
-            "No comparison band is shown because bands are not configured."
+            f"Planned area is {_describe_amount(area_low, area_high, 'ha')}. "
+            f"At {yield_value:g} MT per ha, expected production is "
+            f"{_describe_amount(supply[0], supply[1], 'MT')}. "
+            f"Compared with {metadata['label']} of {reference_value:g} MT, "
+            f"supply load is {_describe_amount(load[0], load[1], 'ratio')}. "
+            "Comparison bands are not set."
         )
         return result
 
@@ -662,6 +916,8 @@ def compute_grci(
     result["comparison_state"] = state
     result["comparison_band_range"] = [low_band, high_band]
     result["borderline"] = borderline
+    if borderline:
+        result["uncertainty_state"] = "borderline"
 
     mode = metadata["comparison_mode"]
     if mode == "baseline":
@@ -675,13 +931,14 @@ def compute_grci(
             result["uncertainty_note"] = (
                 "Farm size is approximate, so the baseline comparison is a range."
             )
-        if borderline:
-            result["uncertainty_state"] = "borderline"
         result["explanation"] = (
-            f"Expected production is {_describe_amount(supply[0], supply[1], 'MT')}. "
-            f"Compared with {result['reference_label']}, the baseline ratio is "
-            f"{_describe_amount(load[0], load[1], 'ratio')}. "
-            f"Comparison state is {state}. This is not a market-demand risk result."
+            f"Planned area is {_describe_amount(area_low, area_high, 'ha')}. "
+            f"At {yield_value:g} MT per ha, expected production is "
+            f"{_describe_amount(supply[0], supply[1], 'MT')}. "
+            f"Compared with {metadata['label']} of {reference_value:g} MT, "
+            f"supply load is {_describe_amount(load[0], load[1], 'ratio')}. "
+            f"Baseline comparison state is {state}. "
+            f"{metadata['evidence_note']}"
         )
         return result
 
@@ -690,7 +947,6 @@ def compute_grci(
     result["risk_band_range"] = [low_band, high_band]
 
     if borderline:
-        result["uncertainty_state"] = "borderline"
         result["uncertainty_note"] = (
             f"Supply load spans {low_band} to {high_band}. The farm-size "
             "estimate can change the final band."
@@ -700,10 +956,19 @@ def compute_grci(
             "Farm size is approximate, so supply load is shown as a range."
         )
 
+    state_wording = {
+        "risk": "Risk state",
+        "risk_proxy": "Proxy risk state",
+        "demo": "Demo risk state",
+    }.get(mode, "Comparison state")
     result["explanation"] = (
-        f"Expected production is {_describe_amount(supply[0], supply[1], 'MT')}. "
-        f"Compared with {result['reference_label']}, the supply-load ratio is "
-        f"{_describe_amount(load[0], load[1], 'ratio')}. "
-        f"Risk state is {state}."
+        f"Planned area is {_describe_amount(area_low, area_high, 'ha')}. "
+        f"At {yield_value:g} MT per ha, expected production is "
+        f"{_describe_amount(supply[0], supply[1], 'MT')}. "
+        f"Compared with {metadata['label']} of {reference_value:g} MT, "
+        f"supply load is {_describe_amount(load[0], load[1], 'ratio')}. "
+        f"{state_wording} is {state}. "
+        f"{metadata['evidence_note']}"
     )
+
     return result

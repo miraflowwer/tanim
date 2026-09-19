@@ -1,91 +1,81 @@
 # Yield reference
 
-This file explains the TANIM yield reference in plain language.
+This file explains the TANIM historical yield reference.
 
-## What is yield
+## What yield means
 
-Yield shows how much crop you get from one hectare of land.
+Yield shows how much crop was produced per hectare.
 
 The unit is metric tons per hectare.
 
-The formula is simple:
+The formula is:
 
 Yield = Production in metric tons divided by Harvested area in hectares.
 
-We use two official PSA measurements that TANIM already keeps:
-production volume and harvested area.
+TANIM uses PSA production volume and harvested area from matching crop records.
 
-We only join crops with the same exact name in both sources.
-We never guess that similar names mean the same crop.
+Crop joins use the same exact normalized crop label in the paired production and area tables.
+Similar names are not merged by guesswork.
 
-## Why five years
+## Reference window
 
-One year can be too high or too low.
-Rain, pests, or price shifts can change one harvest.
+The reference window is 2021-2025.
+Year 2026 is still partial, so it is not included.
 
-So we use five full years, not one year.
-Our reference period is 2021-2025.
-Year 2026 is not complete yet, so we do not use it.
+A summary row needs all five Annual years inside the window.
+The n_years field is 5 for every summary row.
 
-For each crop and Luzon region, the summary requires all five Annual values from 2021 to 2025.
-If any Annual year is missing, that crop-region pair stays out of the summary.
-We report the average, the lowest year, and the highest year.
+The summary stores the arithmetic mean, lowest annual yield, and highest annual yield.
+The average is the app reference. The lowest and highest values show historical spread.
 
-The average is the main reference for the app.
-The lowest and highest years show the range.
+The committed snapshot has 6313 Annual yield rows for 286 crops in 7 Luzon regions.
 
-TANIM now has 6313 yearly Annual yields for 286 crops in 7 Luzon regions.
+## Planning bridge
 
-## How to use it in the app
+Start with planned area in hectares.
 
-Start with the farmer area in hectares.
-
-Multiply the area by the average yield.
-
-Expected production = Area in hectares times Average yield.
+Expected production = Planned area in hectares times Average yield.
 
 Example: 2 hectares of tomato times 13.95 is about 27.89 metric tons.
 Example: 1.5 hectares of eggplant times 16.40 is about 24.61 metric tons.
 
-Show these same words and numbers in the UI so farmers can check the math.
+If farm size is approximate, keep the area margin and show an estimated production range.
 
-## Year and quarter
+## Period detail
 
-The detailed file has one row per crop, region, year, and period.
+The detailed file has one row per crop, region, year, and available period.
 Period can be Quarter1, Quarter2, Semester1, Quarter3, Quarter4, Semester2, or Annual.
 
-For palay and corn, quarterly area exists, so quarterly yield exists.
-For many vegetables and fruits, quarterly area is missing in the source,
-so quarterly yield is missing too. We keep it missing. We do not invent it.
+Quarterly yield exists only when both quarterly production and quarterly harvested area exist.
+Missing source values stay missing. TANIM does not fill them with invented values.
 
-The summary file uses Annual yields only.
-It is stable across quarters.
-You can use it for any harvest quarter, but note it is not quarter specific.
+The summary uses Annual rows only.
+It is not quarter specific.
 
 ## Geography
 
-Luzon means NCR, CAR, Region I, Region II, Region III, Region IV-A, MIMAROPA, and Region V.
+The source scope can include NCR, CAR, Region I, Region II, Region III, Region IV-A, MIMAROPA, and Region V.
 
-Some crop tables have no NCR row. We keep every Luzon row that exists.
-We never invent a missing region.
+Some source tables do not publish NCR crop rows.
+The committed yield snapshot therefore contains only the Luzon regions that have matching production and area rows.
 
-This first version uses region rows only.
-Province rows are next. The file format already allows them.
+This version uses region rows only.
 
 ## Files
 
-Detailed yearly yields are in datasets/generated/yield_reference.csv.
-Five year summary is in datasets/generated/yield_summary.csv.
+Detailed rows are in datasets/generated/yield_reference.csv.
+Summary rows are in datasets/generated/yield_summary.csv.
 
-Detailed columns keep production, area, yield, source tables, and source id.
-Summary columns keep ref period, year count, average yield, min yield, and max yield.
+The detailed file keeps production, area, yield, source table keys, source id, and data status.
+The summary keeps the reference window, year count, average yield, minimum yield, maximum yield, unit, source id, and data status.
 
 ## Limits
 
-Yield is a production baseline. It is not market demand.
-Do not present it as verified demand.
+Historical yield is a production reference. It is not market demand.
+It does not prove that a glut or shortage will happen.
 
-A production baseline helps planning. It does not prove a glut or a shortage.
-Use it with the GRCI reference rules in docs/GRCI_SPEC.md.
+GRCI still needs a separate, clearly labelled comparison reference.
+See docs/GRCI_SPEC.md for the allowed reference types and evidence rules.
 
-Source tables can be revised. Rebuild the reference before a new release.
+PSA source tables can be revised.
+Run the live audit before replacing the committed snapshot.

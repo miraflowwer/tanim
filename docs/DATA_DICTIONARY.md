@@ -33,6 +33,38 @@ The live Explorer catalog is [datasets/generated/crop_registry.generated.json](.
 
 The compact coverage matrix is [datasets/generated/crop_coverage.csv](../datasets/generated/crop_coverage.csv).
 
+## Historical yield reference
+
+[datasets/generated/yield_reference.csv](../datasets/generated/yield_reference.csv) contains detailed regional yield rows derived from paired PSA production and harvested-area tables.
+
+Its important fields are:
+
+- `crop_id`: TANIM crop identifier
+- `region_id`: Luzon region identifier
+- `year`: source year from 2021 to 2025
+- `period`: Annual, Semester, or Quarter period when both source values exist
+- `production_mt`: PSA production in metric tons
+- `area_ha`: PSA harvested area in hectares
+- `yield_mt_per_ha`: production divided by harvested area
+- `production_table` and `area_table`: exact source table keys
+- `source_id`: `PSA-OPENSTAT-CROPS`
+- `data_status`: `observed`
+
+[datasets/generated/yield_summary.csv](../datasets/generated/yield_summary.csv) contains one crop-region summary only when all five Annual years from 2021 to 2025 are available.
+
+Its important fields are:
+
+- `ref_period`: `2021-2025`
+- `n_years`: number of Annual years used. It is 5 in the committed summary
+- `avg_yield_mt_per_ha`: arithmetic mean of available Annual yields
+- `min_yield_mt_per_ha`: lowest available Annual yield
+- `max_yield_mt_per_ha`: highest available Annual yield
+- `unit`: `mt_per_ha`
+
+The builder is [scripts/build_yield_reference.py](../scripts/build_yield_reference.py).
+
+Historical yield converts planned hectares into expected production. It is not market demand.
+
 ## Price series policy
 
 [datasets/price_series_policy.json](../datasets/price_series_policy.json) prevents official PSA price versions from being silently merged.
@@ -58,20 +90,6 @@ Large requests are split into safe batches. Geographic tables keep available Luz
 [scripts/build_crop_registry.py](../scripts/build_crop_registry.py) builds the runtime Explorer registry from current source metadata.
 
 Use `--check-only` to compare live metadata with the committed registry snapshot.
-
-## Yield reference
-
-[scripts/build_yield_reference.py](../scripts/build_yield_reference.py) builds the historical yield reference from PSA production and harvested-area tables.
-
-Yield is production in metric tons divided by harvested area in hectares. TANIM joins only exact normalized crop labels and matches geography through the audited Luzon region aliases. Production and area tables are resolved independently so their source codes do not need to be identical.
-
-[datasets/generated/yield_reference.csv](../datasets/generated/yield_reference.csv) stores detailed crop-region-year-period values. Rows are kept only when production exists and harvested area is above zero.
-
-[datasets/generated/yield_summary.csv](../datasets/generated/yield_summary.csv) stores the app reference. A crop-region pair is included only when all five Annual values from 2021 through 2025 are present. The file reports the five-year average plus the lowest and highest yearly yield.
-
-Use `--check-only` to audit the committed files. Use `--live-sample` with it to also verify a small current OpenSTAT sample.
-
-See [YIELD_REFERENCE.md](YIELD_REFERENCE.md) for the plain-language explanation.
 
 ## Recent DA price snapshot
 

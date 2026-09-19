@@ -36,5 +36,5 @@ jobs:
         run: python scripts/fetch_openstat_luzon.py --verify-only
       - name: Audit live crop registry
         run: python scripts/build_crop_registry.py --check-only
-      - name: Audit yield reference
+      - name: Audit yield reference and live sample
         run: python scripts/build_yield_reference.py --check-only --live-sample

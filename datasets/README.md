@@ -8,7 +8,7 @@ Verified coverage and documentation
 - [../docs/CROP_COVERAGE.md](../docs/CROP_COVERAGE.md): current Explorer crop coverage summary
 - [../docs/DATA_DICTIONARY.md](../docs/DATA_DICTIONARY.md): data fields and generated records
 - [../docs/LIMITATIONS.md](../docs/LIMITATIONS.md): known data and evidence limits
-- [../docs/YIELD_REFERENCE.md](../docs/YIELD_REFERENCE.md): historical yield reference and formula
+- [../docs/YIELD_REFERENCE.md](../docs/YIELD_REFERENCE.md): historical yield method and limits
 
 Core source controls
 
@@ -17,16 +17,10 @@ Core source controls
 - [crop_registry.json](crop_registry.json): safe crop-join rules
 - [generated/crop_registry.generated.json](generated/crop_registry.generated.json): generated Explorer catalog
 - [generated/crop_coverage.csv](generated/crop_coverage.csv): row-by-row Explorer coverage matrix
-- [generated/yield_reference.csv](generated/yield_reference.csv): detailed PSA-derived yield rows
-- [generated/yield_summary.csv](generated/yield_summary.csv): five-complete-year crop-region yield summary
+- [generated/yield_reference.csv](generated/yield_reference.csv): detailed regional historical yield rows
+- [generated/yield_summary.csv](generated/yield_summary.csv): regional annual yield summary for planning
 - [price_series_policy.json](price_series_policy.json): policy for overlapping PSA price series
 - [sources.json](sources.json): source and provenance catalog
-
-Builders and audits
-
-- [../scripts/fetch_openstat_luzon.py](../scripts/fetch_openstat_luzon.py): verifies and materializes selected PSA rows
-- [../scripts/build_crop_registry.py](../scripts/build_crop_registry.py): builds and audits the crop registry
-- [../scripts/build_yield_reference.py](../scripts/build_yield_reference.py): builds and audits the yield reference
 
 Context data
 
@@ -40,6 +34,6 @@ Fixed demo data
 - [demo_farm_plans.csv](demo_farm_plans.csv): synthetic tomato and eggplant plans
 - [demo_coordination_baseline.csv](demo_coordination_baseline.csv): synthetic demo comparison baseline
 
-The fixed demo uses tomato and eggplant. The Explorer data layer is broader.
+The fixed demo uses tomato and eggplant. The Explorer and yield layers are broader.
 
 Farm size can be approximate. Real plans can store a margin so GRCI can use an area range instead of an exact value.
