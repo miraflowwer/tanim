@@ -5,12 +5,15 @@ This folder contains the source layer used by TANIM.
 Verified source coverage
 
 - [VERIFIED_COVERAGE.md](../docs/VERIFIED_COVERAGE.md): strict audit of crop, geography, period, and price coverage
+- [CROP_COVERAGE.md](../docs/CROP_COVERAGE.md): current Explorer crop coverage summary
 - [openstat_tables.json](openstat_tables.json): 59 verified PSA plant-data tables
 - [luzon_scope.json](luzon_scope.json): accepted names for the eight Luzon administrative regions
 - [crop_registry.json](crop_registry.json): rules and manual overrides for safe crop joins
+- [generated/crop_registry.generated.json](generated/crop_registry.generated.json): live generated Explorer crop catalog
+- [generated/crop_coverage.csv](generated/crop_coverage.csv): row-by-row Explorer coverage matrix
 - [price_series_policy.json](price_series_policy.json): precedence for overlapping PSA price series
 - [../scripts/fetch_openstat_luzon.py](../scripts/fetch_openstat_luzon.py): verifies and materializes all selected PSA rows
-- [../scripts/build_crop_registry.py](../scripts/build_crop_registry.py): builds the runtime crop registry from official source metadata
+- [../scripts/build_crop_registry.py](../scripts/build_crop_registry.py): builds and audits the live crop registry
 
 Price data
 

@@ -27,7 +27,15 @@ Farmgate, retail, Supply Utilization Accounts, and NCCAG context are optional. T
 
 Tomato and eggplant have manual display overrides for the fixed demo. Their NCCAG mapping points to the general Vegetables layer because NCCAG does not provide separate tomato and eggplant layers in the referenced layer list.
 
-The runtime registry is built by [../scripts/build_crop_registry.py](../scripts/build_crop_registry.py) from current official source metadata.
+## generated crop registry
+
+[generated/crop_registry.generated.json](generated/crop_registry.generated.json) is the current machine-readable Explorer catalog built from live PSA metadata.
+
+[generated/crop_coverage.csv](generated/crop_coverage.csv) is the compact coverage matrix. Each Explorer row shows whether a safe join exists for production, area, farmgate price, retail price, national SUA context, and NCCAG context.
+
+A no in the matrix means that TANIM has no safe join for that source label. It does not mean that the source has no related data.
+
+The live registry is built by [../scripts/build_crop_registry.py](../scripts/build_crop_registry.py). Use `--check-only` to audit current metadata without replacing the committed snapshot.
 
 ## price_series_policy.json
 
@@ -35,7 +43,7 @@ This file prevents incompatible PSA price vintages from being merged without war
 
 Farmgate display precedence is legacy for 1990 to 2009 and current for 2010 onward.
 
-Retail display precedence is legacy for 1990 to 2011, revised for 2012 to 2017, and current for 2018 onward.
+Retail display precedence is legacy for 1990 to 2011, revised for 2012 to 2021, and current for 2018 onward.
 
 All raw source series remain available even when they overlap.
 
@@ -57,11 +65,11 @@ Large requests are recursively divided below 90,000 cells. CSV batches are strea
 
 This script reads current OpenSTAT metadata and builds the runtime crop registry.
 
-It only enables planning crops that have both production and area coverage under the same normalized crop label.
+It only enables planning entries that have both production and area coverage under the same normalized crop label.
 
-It keeps unmatched source labels separate. This reduces the risk of joining different crops, grades, or varieties by mistake.
+It keeps unmatched source labels separate. This reduces the risk of joining different crops, grades, varieties, or product forms by mistake.
 
-Use `--check-only` to validate that a runtime registry can be built without writing the generated file.
+The generated catalog can include varieties and product forms. Its entry count is not a count of unique biological species.
 
 ## da_price_monitoring_ncr_latest.csv
 

@@ -25,6 +25,8 @@ jobs:
 
   live-openstat-audit:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -40,5 +42,20 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: crop-registry-snapshot
-          path: datasets/generated/
+          path: |
+            datasets/generated/
+            docs/CROP_COVERAGE.md
           if-no-files-found: error
+      - name: Commit live crop registry snapshot
+        if: >-
+          github.event_name == 'push' &&
+          github.event.head_commit.message == 'data: materialize live crop registry'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add datasets/generated docs/CROP_COVERAGE.md
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "data: materialize Explorer crop catalog"
+          git push

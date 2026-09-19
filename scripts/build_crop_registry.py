@@ -13,6 +13,7 @@ REGISTRY = ROOT / "datasets" / "crop_registry.json"
 NCCAG = ROOT / "datasets" / "nccag_reference.json"
 DEFAULT_OUT = ROOT / "datasets" / "generated" / "crop_registry.generated.json"
 DEFAULT_COVERAGE = ROOT / "datasets" / "generated" / "crop_coverage.csv"
+DEFAULT_SUMMARY = ROOT / "docs" / "CROP_COVERAGE.md"
 USER_AGENT = "TANIM/2026 crop registry builder"
 
 CROP_HINTS = ("crop", "commodity", "item", "product")
@@ -246,7 +247,11 @@ def coverage_rows(runtime):
             "nccag_context": "yes" if coverage["nccag"] else "no",
             "nccag_layer": crop["nccag"]["layer"] or "",
             "nccag_specificity": crop["nccag"]["specificity"] or "",
-            "demo_crop": "yes" if crop.get("manual_override", {}).get("demo_crop") else "no",
+            "demo_crop": (
+                "yes"
+                if crop.get("manual_override", {}).get("demo_crop")
+                else "no"
+            ),
         })
     return rows
 
@@ -271,6 +276,79 @@ def write_coverage_csv(path, runtime):
         writer = csv.DictWriter(handle, fieldnames=fields, lineterminator="\n")
         writer.writeheader()
         writer.writerows(rows)
+
+
+def write_summary(path, runtime):
+    crops = runtime["crops"]
+    counts = {
+        key: sum(1 for crop in crops if crop["coverage"][key])
+        for key in ("production", "area", "farmgate", "retail", "sua", "nccag")
+    }
+    lines = [
+        "# Explorer crop coverage",
+        "",
+        f"Audit date: {runtime['verified_as_of']}.",
+        "",
+        (
+            f"TANIM currently has {runtime['crop_count']} Explorer planning entries "
+            "with safe production and area joins."
+        ),
+        "",
+        "| Data context | Explorer entries |",
+        "| --- | ---: |",
+        f"| Production | {counts['production']} |",
+        f"| Area | {counts['area']} |",
+        f"| Farmgate price | {counts['farmgate']} |",
+        f"| Retail price | {counts['retail']} |",
+        f"| Supply Utilization Accounts | {counts['sua']} |",
+        f"| NCCAG suitability context | {counts['nccag']} |",
+        "",
+        (
+            "The full row-by-row matrix is in "
+            "[crop_coverage.csv](../datasets/generated/crop_coverage.csv)."
+        ),
+        "",
+        (
+            "The machine-readable Explorer catalog is in "
+            "[crop_registry.generated.json]"
+            "(../datasets/generated/crop_registry.generated.json)."
+        ),
+        "",
+        "## Reading the matrix",
+        "",
+        (
+            "Every Explorer entry has production and area coverage because both "
+            "are required before TANIM allows a planning entry."
+        ),
+        "",
+        (
+            "A yes in another column means TANIM found a safe exact normalized "
+            "source-label join, or a reviewed manual mapping."
+        ),
+        "",
+        (
+            "A no does not prove that the source has no related data. It means "
+            "TANIM does not currently have a safe cross-source join for that entry."
+        ),
+        "",
+        (
+            "Supply Utilization Accounts are national context only. They must not "
+            "be presented as Luzon demand."
+        ),
+        "",
+        (
+            "NCCAG context can be a direct layer or a broader reviewed group layer. "
+            "The matrix records the layer and its specificity."
+        ),
+        "",
+        (
+            "Source entries can include varieties, forms, and crop products. The "
+            f"{runtime['crop_count']} entries are not a count of unique biological species."
+        ),
+        "",
+    ]
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("\n".join(lines), encoding="utf-8")
 
 
 def audit_committed_snapshot(runtime, snapshot_path):
@@ -311,6 +389,11 @@ def main():
         default=DEFAULT_COVERAGE,
     )
     parser.add_argument(
+        "--summary-output",
+        type=pathlib.Path,
+        default=DEFAULT_SUMMARY,
+    )
+    parser.add_argument(
         "--check-only",
         action="store_true",
         help="Build and audit the live registry without replacing generated files.",
@@ -333,8 +416,10 @@ def main():
 
     write_runtime_registry(args.output, runtime)
     write_coverage_csv(args.coverage_output, runtime)
+    write_summary(args.summary_output, runtime)
     print(f"Wrote {runtime['crop_count']} crops to {args.output}")
     print(f"Wrote coverage matrix to {args.coverage_output}")
+    print(f"Wrote coverage summary to {args.summary_output}")
 
 
 if __name__ == "__main__":
