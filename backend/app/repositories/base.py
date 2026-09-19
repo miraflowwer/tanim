@@ -1,4 +1,5 @@
-# ruff: noqa: E701, E702`n"""Repository contracts shared by memory and PostgreSQL adapters."""
+# ruff: noqa: E701, E702
+"""Repository contracts shared by memory and PostgreSQL adapters."""
 from __future__ import annotations
 
 from contextlib import AbstractContextManager

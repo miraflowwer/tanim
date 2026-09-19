@@ -1,3 +1,4 @@
+# ruff: noqa: E701, E702
 """Supabase Auth/JWKS boundary for the database-backed API.
 
 A valid provider token is necessary but not sufficient: the subject must map to

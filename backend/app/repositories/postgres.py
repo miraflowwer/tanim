@@ -1,4 +1,5 @@
-# ruff: noqa: E701, E702`n"""PostgreSQL repository boundary for all production persistence."""
+# ruff: noqa: E701, E702
+"""PostgreSQL repository boundary for all production persistence."""
 from __future__ import annotations
 
 import uuid

@@ -1,4 +1,5 @@
-# ruff: noqa: E701, E702`n"""Durable Member 3 platform entities; no passwords or bearer tokens."""
+# ruff: noqa: E701, E702
+"""Durable Member 3 platform entities; no passwords or bearer tokens."""
 from __future__ import annotations
 
 import uuid

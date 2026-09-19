@@ -1,4 +1,5 @@
-# ruff: noqa: E701, E702`n"""Structured, privacy-safe request telemetry and process metrics."""
+# ruff: noqa: E701, E702
+"""Structured, privacy-safe request telemetry and process metrics."""
 from __future__ import annotations
 
 import json

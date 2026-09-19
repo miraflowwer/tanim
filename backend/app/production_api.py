@@ -1,3 +1,4 @@
+# ruff: noqa: E701, E702
 """Database-backed FastAPI application for Member 3.
 
 Production routes never import the legacy global store. Every authenticated
