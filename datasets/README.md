@@ -7,8 +7,10 @@ Verified source coverage
 - [VERIFIED_COVERAGE.md](../docs/VERIFIED_COVERAGE.md): strict audit of crop, geography, period, and price coverage
 - [openstat_tables.json](openstat_tables.json): 59 verified PSA plant-data tables
 - [luzon_scope.json](luzon_scope.json): accepted names for the eight Luzon administrative regions
+- [crop_registry.json](crop_registry.json): rules and manual overrides for safe crop joins
 - [price_series_policy.json](price_series_policy.json): precedence for overlapping PSA price series
 - [../scripts/fetch_openstat_luzon.py](../scripts/fetch_openstat_luzon.py): verifies and materializes all selected PSA rows
+- [../scripts/build_crop_registry.py](../scripts/build_crop_registry.py): builds the runtime crop registry from official source metadata
 
 Price data
 
@@ -30,3 +32,5 @@ Demo-only data
 - [demo_demand_proxy.csv](demo_demand_proxy.csv)
 
 The fixed demo uses tomato and eggplant. The source data layer is not restricted to those crops.
+
+Farm size in a real user plan is an estimate. TANIM stores an area margin so the GRCI can work with a range instead of treating the input as exact. The fixed synthetic demo uses a zero margin because its values are controlled demo inputs.

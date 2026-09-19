@@ -1,7 +1,7 @@
-plan_id,crop_canonical,farm_size_ha,planting_date,harvest_period,municipality,source_id,data_status
-T-01,tomato,10.0,2026-09-01,2026-12,"Tanauan, Batangas",DEMO-2026,synthetic
-T-02,tomato,10.0,2026-09-01,2026-12,"Tanauan, Batangas",DEMO-2026,synthetic
-T-03,tomato,10.0,2026-09-01,2026-12,"Tanauan, Batangas",DEMO-2026,synthetic
-T-04,tomato,10.0,2026-09-01,2026-12,"Tanauan, Batangas",DEMO-2026,synthetic
-E-01,eggplant,4.0,2026-09-01,2026-12,"Tanauan, Batangas",DEMO-2026,synthetic
-E-02,eggplant,4.0,2026-09-01,2026-12,"Tanauan, Batangas",DEMO-2026,synthetic
+plan_id,crop_canonical,farm_size_ha,farm_size_margin_ha,planting_date,harvest_period,municipality,source_id,data_status
+T-01,tomato,10.0,0.0,2026-09-01,2026-12,"Tanauan, Batangas",DEMO-2026,synthetic
+T-02,tomato,10.0,0.0,2026-09-01,2026-12,"Tanauan, Batangas",DEMO-2026,synthetic
+T-03,tomato,10.0,0.0,2026-09-01,2026-12,"Tanauan, Batangas",DEMO-2026,synthetic
+T-04,tomato,10.0,0.0,2026-09-01,2026-12,"Tanauan, Batangas",DEMO-2026,synthetic
+E-01,eggplant,4.0,0.0,2026-09-01,2026-12,"Tanauan, Batangas",DEMO-2026,synthetic
+E-02,eggplant,4.0,0.0,2026-09-01,2026-12,"Tanauan, Batangas",DEMO-2026,synthetic

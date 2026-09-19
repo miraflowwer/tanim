@@ -44,6 +44,16 @@ The PSA Supply Utilization Accounts are national tables. TANIM keeps the seven p
 
 These data must not be presented as Luzon demand.
 
+## Cross-source crop joins
+
+Raw source coverage does not mean every crop name can be joined safely across every dataset.
+
+TANIM now uses [crop_registry.json](../datasets/crop_registry.json) and [build_crop_registry.py](../scripts/build_crop_registry.py) to create a safe runtime crop registry.
+
+Automatic joins require the same normalized crop label. A planning crop must have both production and area coverage. Other source families are attached only when the same safe match exists or a reviewed manual override is present.
+
+Similar names, varieties, grades, and partial matches are kept separate. This prevents the wider Explorer mode from producing false cross-source calculations.
+
 ## Scope rule
 
 Luzon means NCR, CAR, Region I, Region II, Region III, Region IV-A, MIMAROPA, and Region V.
@@ -54,8 +64,10 @@ Some production tables do not publish an NCR row. TANIM keeps every available Lu
 
 The selected official tables contain millions of source cells. The full OpenSTAT corpus is therefore not hand-copied into small CSV files in main.
 
-Instead, main contains the audited 59-table manifest, Luzon filter, price-series policy, tests, and deterministic materializer. Running the materializer downloads every selected official row and keeps only Luzon rows for geographic tables.
+Instead, main contains the audited 59-table manifest, Luzon filter, crop join rules, price-series policy, tests, and deterministic materializers. Running the materializer downloads every selected official row and keeps only Luzon rows for geographic tables.
 
 ## Demo rule
 
 Tomato and eggplant remain the fixed demonstration pair. They are not the only crops supported by the source layer.
+
+The fixed demo uses exact synthetic farm sizes with a zero margin so the scenario stays reproducible. Real user plans can carry a farm-size margin, and GRCI should report a range when that margin affects the result.

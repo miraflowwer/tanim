@@ -19,7 +19,9 @@ jobs:
         with:
           python-version: "3.12"
       - name: Run dataset tests
-        run: python tests/test_datasets.py
+        run: |
+          python tests/test_datasets.py
+          python tests/test_crop_registry.py
 
   live-openstat-audit:
     runs-on: ubuntu-latest

@@ -15,6 +15,20 @@ This is the authoritative PSA table manifest.
 
 The manifest contains 59 plant-data tables.
 
+## crop_registry.json
+
+This file defines safe rules for joining crop names across TANIM sources.
+
+Automatic joins use exact normalized labels only. Similar names, partial names, grades, and varieties are not merged by guesswork.
+
+A crop can support planning when both production and area data resolve to the same normalized crop label.
+
+Farmgate, retail, Supply Utilization Accounts, and NCCAG context are optional. They are attached only when a safe mapping exists.
+
+Tomato and eggplant have manual display overrides for the fixed demo. Their NCCAG mapping points to the general Vegetables layer because NCCAG does not provide separate tomato and eggplant layers in the referenced layer list.
+
+The runtime registry is built by [../scripts/build_crop_registry.py](../scripts/build_crop_registry.py) from current official source metadata.
+
 ## price_series_policy.json
 
 This file prevents incompatible PSA price vintages from being merged without warning.
@@ -39,6 +53,16 @@ Without `--verify-only`, the script downloads every selected value. Geographic t
 
 Large requests are recursively divided below 90,000 cells. CSV batches are streamed to disk so a large table is not held entirely in memory.
 
+## build_crop_registry.py
+
+This script reads current OpenSTAT metadata and builds the runtime crop registry.
+
+It only enables planning crops that have both production and area coverage under the same normalized crop label.
+
+It keeps unmatched source labels separate. This reduces the risk of joining different crops, grades, or varieties by mistake.
+
+Use `--check-only` to validate that a runtime registry can be built without writing the generated file.
+
 ## da_price_monitoring_ncr_latest.csv
 
 This file is the complete DA weekly NCR report snapshot for 7 to 13 September 2026. It is supplemental recent-price evidence, not all-Luzon coverage.
@@ -46,3 +70,7 @@ This file is the complete DA weekly NCR report snapshot for 7 to 13 September 20
 ## demo files
 
 The fixed demo uses tomato and eggplant synthetic plans. The demo files do not define the supported crop universe.
+
+In `demo_farm_plans.csv`, `farm_size_ha` is the estimated area and `farm_size_margin_ha` is the plus-or-minus margin in hectares.
+
+The synthetic demo uses a margin of 0.0 ha so its fixed scenario stays reproducible. Real user plans should carry a margin when the entered farm size is only an estimate.
