@@ -22,3 +22,8 @@
 - PAGASA outlook statements can change with later advisories.
 - Open-Meteo values are requested at runtime.
 - NCCAG remains a reference to the official map. Raw GIS layers are not redistributed in this repository.
+
+- PR #7 is a Phase A production foundation. The `app/` and `backend/app/` path is not deployed for real users, and PostgreSQL mode keeps planning routes unavailable until a SQLAlchemy repository adapter replaces the development store.
+- Seeded FastAPI records, including the example marked reviewed, are deterministic test fixtures. They do not establish an actual verified buyer commitment for a production calculation.
+- Development consent, audit, plan revisions, and calculation runs are held in memory. Their schemas and RLS policies do not yet make those API flows durable.
+- Exact farm GPS is optional in the production schema. Municipality and region can be recorded without coordinates.

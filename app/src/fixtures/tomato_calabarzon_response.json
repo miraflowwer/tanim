@@ -1,0 +1,32 @@
+{
+  "planId": "demo-tomato-calabarzon-001",
+  "crop": "Tomato",
+  "harvestPeriod": "2026-Q4",
+  "plannedAreaHa": 12.5,
+  "estimatedProductionMt": 139.462,
+  "estimatedRangeMt": {
+    "low": 133.9,
+    "high": 145
+  },
+  "comparisonAmountMt": 375,
+  "supplyLoad": 0.372,
+  "coordinationStatus": "low_coordination_load",
+  "headline": "Planned production is below the comparison reference for this crop and harvest period.",
+  "evidenceQuality": "Synthetic demo baseline — not market demand.",
+  "referenceUsed": "Demo coordination baseline, CALABARZON, 375 MT",
+  "provenance": {
+    "referenceType": "demo_coordination_baseline",
+    "verificationStatus": "synthetic_demo",
+    "source": "Seeded demo snapshot (synthetic_demo)",
+    "geography": "CALABARZON",
+    "sourcePeriod": "2026-Q4 demo",
+    "verifiedAt": "2026-09-19",
+    "calculationPolicyVersion": "grci-1.0",
+    "engineVersion": "tanim-engine-0.1",
+    "evidenceNote": "Synthetic demo baseline for hackathon demo only. Not market demand."
+  },
+  "stale": false,
+  "_note": "synthetic_demo fixture. S=139.462 MT vs R=375 MT, L=0.372 (139.462/375=0.371899). Deterministic seed for offline demo.",
+  "calculationId": "demo-calculation-001",
+  "synthetic": true
+}

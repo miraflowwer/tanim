@@ -1,6 +1,8 @@
-# TANIM farmer UI
+# TANIM farmer UI (frozen hackathon demo — the only Vercel deployment)
 
 This is the Step 7 farmer-facing MVP. React displays results from the Python service. The browser does not calculate GRCI values.
+
+`web/` is frozen for the hackathon demo and is what `vercel.json` deploys. `app/` is the production P0 frontend target (Vite React TS) and is not deployed.
 
 ## Run locally
 

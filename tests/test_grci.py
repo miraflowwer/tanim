@@ -714,7 +714,7 @@ def test_engine_is_independent_from_ui_and_stdlib_only():
         elif isinstance(node, ast.ImportFrom) and node.module:
             imports.add(node.module.split(".")[0])
 
-    assert imports <= {"csv", "math", "pathlib"}
+    assert imports <= {"csv", "datetime", "math", "pathlib", "re"}
 
 
 if __name__ == "__main__":

@@ -11,7 +11,9 @@ TANIM stands for Timely Agricultural Network for Informed Market. It is a planti
 - [docs/](docs/README.md): MVP rules, deployment, evidence, coverage, and limits
 - [datasets/](datasets/README.md): committed source data and generated planning references
 - [scripts/](scripts): crop registry, yield reference, GRCI engine, and service
-- [web/](web/README.md): React farmer interface
+- [app/](app/README.md): Phase A React/TypeScript production frontend target (not deployed)
+- [backend/](backend/README.md): FastAPI, SQLAlchemy 2, Alembic, and PostgreSQL/PostGIS production target (database routes not yet wired)
+- [web/](web/README.md): frozen hackathon demo (the only Vercel deployment)
 - [api/](api): thin Vercel entry points that reuse the Python service
 - [tests/](tests): data, engine, service, frontend contract, and deployment checks
 - [examples/](examples): example service requests
