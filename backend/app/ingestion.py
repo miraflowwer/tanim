@@ -85,10 +85,10 @@ def validate_rows(
                 raise ValueError("geography_invalid")
             period_start = _date(raw.get("period_start"), "period_start")
             period_end = _date(raw.get("period_end"), "period_end")
-            if period_end < period_start:
-                raise ValueError("date_range_invalid")
             if period_start > today:
                 raise ValueError("date_future")
+            if period_end < period_start:
+                raise ValueError("date_range_invalid")
             if (today - period_end).days > configured_age:
                 raise ValueError("data_stale")
             value_key = next((key for key in ("value", "value_mt", "amount_mt", "yield_mt_per_ha") if raw.get(key) is not None), None)
