@@ -74,4 +74,4 @@ Instead, main contains the audited 59-table manifest, Luzon filter, crop registr
 
 Tomato and eggplant remain the fixed demonstration pair. They are not the only crops supported by the source layer.
 
-The fixed demo uses exact synthetic farm sizes with a zero margin so the scenario stays reproducible. Real user plans can carry a farm-size margin, and GRCI should report a range when that margin affects the result.
+The fixed demo uses exact synthetic farm sizes with a zero margin so the scenario stays reproducible. Its comparison file is named `demo_coordination_baseline.csv` and is explicitly marked as synthetic, not observed market demand. Real user plans can carry a farm-size margin, and GRCI should report a range when that margin affects the result.

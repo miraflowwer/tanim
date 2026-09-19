@@ -1,126 +1,145 @@
 # Glut Risk Coordination Indicator
 
-Status: MVP specification. Product risk thresholds are not final yet.
+Status: MVP specification. Product risk thresholds are not final.
 
-The Glut Risk Coordination Indicator, or GRCI, is TANIM's main coordination measure.
+The Glut Risk Coordination Indicator, or GRCI, is TANIM's planting coordination measure.
 
-It compares planned crop supply with a reference for the same planning context. The MVP uses fixed rules and source data. It does not use machine learning to produce the result.
+It compares planned crop supply with a clearly named reference. The reference quality must always be visible. The MVP uses fixed rules and source data. It does not use machine learning.
 
-The current implementation is in [../scripts/grci.py](../scripts/grci.py). The fixed demo and edge cases are checked in [../tests/test_grci.py](../tests/test_grci.py).
+The implementation is in [../scripts/grci.py](../scripts/grci.py). The fixed demo and edge cases are checked in [../tests/test_grci.py](../tests/test_grci.py).
 
 ## Inputs
 
 A farmer plan should include crop, location, estimated farm size, farm-size margin, planting date, and expected harvest period.
 
-The crop must resolve through the TANIM crop registry before a GRCI calculation is allowed. A planning crop needs both production and area coverage.
+The crop must pass the TANIM crop registry. Production and area coverage are both required.
+
+All plans in one calculation must belong to the same crop, location, and harvest period. The engine rejects a plan row when it clearly belongs to another context.
 
 ## Farm-size uncertainty
 
-Farm size can be an estimate. TANIM must not treat every entered area as exact.
+Farm size can be an estimate.
 
-Let A be the estimated farm size in hectares. Let M be the plus-or-minus margin in hectares.
+Let $A$ be the estimated farm size in hectares. Let $M$ be the plus-or-minus margin.
 
-The lower area is:
+$$
+A_{low} = \\max(0, A - M)
+$$
 
-`max(0, A - M)`
+$$
+A_{high} = A + M
+$$
 
-The upper area is:
+For example, 2.0 ha with a margin of 0.2 ha becomes 1.8 ha to 2.2 ha.
 
-`A + M`
+For several farmers, TANIM adds the lower values and the upper values separately. This gives one collective planned-area range.
 
-For example, 2.0 ha with a margin of 0.2 ha becomes an estimated range of 1.8 ha to 2.2 ha.
-
-For several farmers, TANIM adds the lower values together and adds the upper values together. This gives one collective planned-area range.
-
-The fixed synthetic demo uses a margin of 0 because its inputs are controlled. Real user plans can use a non-zero margin.
-
-TANIM does not set a default real-world margin yet. A default should only be added after pilot evidence supports it.
+The fixed demo uses a zero margin because its inputs are controlled. TANIM does not set a default real-world margin yet.
 
 ## Planned supply
 
-When a valid reference yield is available, TANIM converts the planned-area range into a planned-supply range.
+TANIM converts planned area to planned supply when a valid reference yield is available.
 
-`planned supply = planned area x reference yield`
+$$
+\\text{Planned supply} = \\text{Planned area} \\times \\text{Reference yield}
+$$
+
+Planned supply is measured in metric tons, or MT.
 
 If planned area is 18 ha to 22 ha and reference yield is 15 MT/ha, planned supply is 270 MT to 330 MT.
 
-The result also needs the source of the reference yield. A value without its source is incomplete.
+The result must include the source of the reference yield.
+
+## Reference amount
+
+The comparison amount must also use MT. TANIM rejects another unit because the ratio would be invalid.
+
+Every reference must state:
+
+- reference type
+- reference geography
+- reference period
+- source label or source record
+- evidence note
+
+These fields make the limits of the comparison visible.
 
 ## Supply load
 
-When a valid reference amount is available, TANIM compares planned supply with that amount.
+For a reference that can be compared with planned supply:
 
-`supply load = planned supply / reference amount`
+$$
+\\text{Supply load} = \\frac{\\text{Planned supply in MT}}{\\text{Reference amount in MT}}
+$$
 
-Supply load can also be a range.
+A value of 1.0 means planned supply equals the reference amount.
 
-A supply load of 1.0 means planned supply is equal to the reference amount. A value above 1.0 means planned supply is higher than the reference. A value below 1.0 means it is lower.
+This ratio does not prove that a glut will happen. Its meaning depends on the reference type.
 
-This ratio does not prove that a glut will happen. Its meaning depends on the quality and geographic scope of the reference amount.
+## Reference types
 
-## Risk classification
+TANIM accepts five reference types.
 
-Risk bands are supplied by the caller. The calculation module does not store final product thresholds.
+1. `local_committed_demand` is confirmed local buyer, cooperative, or LGU demand. It is the only reference that may be directly described as market demand.
+2. `local_historical_absorption` is past local sold or accepted volume. It is a historical absorption proxy, not current or committed demand.
+3. `national_utilization_context` is national context only. TANIM does not divide local planned supply by this national amount and does not produce a GRCI risk band from it.
+4. `historical_production_baseline` compares a plan with past production. It can produce a baseline comparison, but it must not be shown as market demand or as a demand-based glut result.
+5. `demo_coordination_baseline` is synthetic data for the fixed demo. It can produce the fixed demo GRCI result, but it must always be labelled as synthetic and not observed market demand.
 
-The fixed demo tests currently use test-only bands:
+The machine-readable reference metadata is defined in `REFERENCE_TYPES` in [../scripts/grci.py](../scripts/grci.py).
+
+## Risk and baseline states
+
+Risk bands are supplied by the caller. The engine does not store final product thresholds.
+
+The fixed demo tests use temporary bands:
 
 - low: supply load up to 1.0
 - watch: above 1.0 and up to 1.5
 - high: above 1.5
 
-These values lock the demo fixture for testing. They are not approved production thresholds.
+These values keep the demo reproducible. They are not approved production thresholds.
 
-If the lower and upper supply-load values fall in different bands, TANIM marks the result as borderline. The interface should show that the farm-size estimate can change the final band.
+`comparison_state` stores the band from any valid comparison.
+
+`risk_state` is used only when the reference mode supports a GRCI risk interpretation. Historical production keeps `risk_state` empty and uses only `comparison_state`.
+
+National utilization context produces neither state.
+
+If a range crosses two bands, the state is `borderline`.
 
 ## Result status
 
-Data quality and risk level are separate.
+`status` describes what the engine could safely produce.
 
-`status` describes whether TANIM could complete the calculation:
-
-- `ok`: calculation completed and a risk state was assigned
-- `unclassified`: supply load is available but risk bands are not configured
-- `incomplete`: a required input or source value is missing
-- `invalid`: an input or reference value is not usable
+- `ok`: a GRCI risk result is available
+- `baseline`: a historical production comparison is available, but it is not a demand-based risk result
+- `context_only`: the reference is shown as context and is not used for a local ratio
+- `unclassified`: a valid ratio exists but risk bands are not configured
+- `incomplete`: a required value is missing
+- `invalid`: a value, unit, reference type, geography, or plan context is not usable
 - `unsupported`: the crop does not have a safe production and area join
 
-`risk_state` is only used for the risk result. It is normally low, watch, high, or borderline. It stays empty when the calculation is not complete.
-
-## Reference quality
-
-The GRCI result must state which reference it uses. The engine accepts only these reference types, defined in scripts/grci.py as REFERENCE_TYPES:
-
-1. local_committed_demand: committed buyer, cooperative, or LGU demand for the crop and period. User label: Local committed demand. This is market demand.
-2. local_historical_absorption: local historical sold or accepted volume. User label: Local historical absorption. This is market demand history, not a forward commitment.
-3. national_utilization_context: broader official utilization data used only with its real geographic scope. User label: National utilization context (not Luzon demand). This is not Luzon demand.
-4. historical_production_baseline: historical production used as a coordination baseline. User label: Historical production baseline (not market demand). This is never market demand.
-5. demo_coordination_baseline: synthetic demo baseline. User label: Demo coordination baseline (not market demand). This is never market demand.
-
-Preferred evidence order is local_committed_demand, then local_historical_absorption, then national_utilization_context, then historical_production_baseline. We still do not have verified Luzon-local market demand for every crop, so callers must select the tier that matches the evidence.
-
-Rules:
-
-- Historical production must never be labelled as market demand in code, docs, or UI. Use describe_reference() for user wording.
-- Only local_committed_demand and local_historical_absorption may use the words market demand. The other three tiers must use their not-demand labels.
-- PSA Supply Utilization Accounts remain national context. They must use national_utilization_context and must not be presented as Luzon demand.
-- An unknown or missing reference type returns incomplete. Supply load is not calculated for display until the tier is known.
+Data quality and risk level are separate.
 
 ## Fixed demo fixture
 
 The fixed demo is synthetic and reproducible.
 
-Tomato uses 40 ha of planned area. The demo yield is 15 MT/ha, so planned supply is 600 MT. The demo reference amount is 375 MT. The supply load is 1.60.
+Tomato uses 40 ha. At 15 MT/ha, planned supply is 600 MT. The demo coordination baseline is 375 MT. The supply load is 1.60.
 
-Eggplant uses 8 ha of planned area. The demo yield is 12 MT/ha, so planned supply is 96 MT. The demo reference amount is 180 MT. The supply load is about 0.53.
+Eggplant uses 8 ha. At 12 MT/ha, planned supply is 96 MT. The demo coordination baseline is 180 MT. The supply load is about 0.53.
 
-With the test-only bands above, tomato is high and eggplant is low.
+With the temporary demo bands, tomato is high and eggplant is low.
 
-The plan rows come from [../datasets/demo_farm_plans.csv](../datasets/demo_farm_plans.csv). The reference rows come from [../datasets/demo_demand_proxy.csv](../datasets/demo_demand_proxy.csv).
+The plan rows are in [../datasets/demo_farm_plans.csv](../datasets/demo_farm_plans.csv).
 
-Both files are marked as demo data. The 375 MT and 180 MT values use reference type demo_coordination_baseline. They are not observed local market demand and must not be presented that way. The demo user label is Demo coordination baseline (not market demand).
+The synthetic reference rows are in [../datasets/demo_coordination_baseline.csv](../datasets/demo_coordination_baseline.csv).
+
+The baseline file states its reference type, geography, period, and synthetic status. Its 375 MT and 180 MT values are not observed local market demand.
 
 ## Output contract
 
-A GRCI result includes crop, location, harvest period, planned-area range, reference yield and source, planned-supply range, reference amount and type, reference label and evidence note, supply-load range, calculation status, risk state, risk-band range, uncertainty note, and source labels.
+A result includes the plan context, planned-area range, reference yield and source, planned-supply range, reference amount and unit, reference type, geography, period, reference label, evidence note, reference quality, reference mode, supply-load range when allowed, calculation status, comparison state, risk state when allowed, uncertainty note, and source labels.
 
-The interface must show reference_label and reference_evidence_note, not only the raw reference_type code. The result must be reproducible from the stored inputs and source data.
+The interface must show the reference label and evidence note. It must not infer stronger evidence than the result provides.

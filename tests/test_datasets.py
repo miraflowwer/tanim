@@ -264,6 +264,28 @@ def test_demo_stays_fixed():
         assert row["data_status"] == "synthetic"
     assert totals == {"tomato": 40.0, "eggplant": 8.0}
 
+    fields, baseline = load_csv("demo_coordination_baseline.csv")
+    assert not (DS / "demo_demand_proxy.csv").exists()
+    assert fields == [
+        "crop_canonical",
+        "reference_period",
+        "reference_geography",
+        "reference_scope_level",
+        "reference_qty_mt",
+        "reference_yield_mt_per_ha",
+        "reference_area_eq_ha",
+        "reference_type",
+        "source_id",
+        "data_status",
+    ]
+    assert {row["crop_canonical"] for row in baseline} == {"tomato", "eggplant"}
+    assert {row["reference_type"] for row in baseline} == {
+        "demo_coordination_baseline"
+    }
+    assert {row["reference_scope_level"] for row in baseline} == {"region"}
+    assert {row["source_id"] for row in baseline} == {"DEMO-2026"}
+    assert {row["data_status"] for row in baseline} == {"derived_demo"}
+
 
 def test_recursive_batching_handles_large_openstat_tables():
     fetcher = load_fetcher()
@@ -331,11 +353,11 @@ def test_source_configs_resolve():
 
 
 def test_markdown_style_guard():
-    for path in [ROOT / "README.md", *DS.glob("*.md")]:
+    for path in [ROOT / "README.md", *DS.glob("*.md"), *DOCS.glob("*.md")]:
         text = path.read_text(encoding="utf-8")
         assert "—" not in text, path
-        assert "---" not in text, path
         assert "**" not in text, path
+        assert all(line.strip() != "---" for line in text.splitlines()), path
 
 
 if __name__ == "__main__":

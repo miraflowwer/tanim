@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
-"""Deterministic Glut Risk Coordination Indicator (GRCI) calculation.
+"""Deterministic Glut Risk Coordination Indicator (GRCI).
 
 The module follows docs/GRCI_SPEC.md. It does not use machine learning.
-
-Risk thresholds are supplied by the caller. The MVP does not store final
-product thresholds in this module.
+Risk thresholds are supplied by the caller.
 """
 
 import math
@@ -14,77 +12,115 @@ REFERENCE_TYPES = {
     "local_committed_demand": {
         "label": "Local committed demand",
         "evidence_note": (
-            "Compared against local committed buyer, cooperative, or LGU "
-            "demand for this crop and period."
+            "Confirmed local buyer, cooperative, or LGU demand for the crop "
+            "and planning period."
         ),
-        "is_market_demand": True,
+        "quality": "direct",
+        "scope": "local",
+        "comparison_mode": "risk",
+        "market_demand_wording_allowed": True,
     },
     "local_historical_absorption": {
-        "label": "Local historical absorption",
+        "label": "Local historical absorption (not committed demand)",
         "evidence_note": (
-            "Compared against past local sold or accepted volume. "
-            "This is not a forward demand commitment."
+            "Past local sold or accepted volume. It is a historical absorption "
+            "proxy, not a current or committed demand value."
         ),
-        "is_market_demand": True,
+        "quality": "historical_proxy",
+        "scope": "local",
+        "comparison_mode": "risk_proxy",
+        "market_demand_wording_allowed": False,
     },
     "national_utilization_context": {
         "label": "National utilization context (not Luzon demand)",
         "evidence_note": (
-            "PSA Supply Utilization Accounts are national context. "
-            "This is not Luzon demand."
+            "National utilization data provide context only. They are not a "
+            "Luzon or local demand reference and do not produce a GRCI risk band."
         ),
-        "is_market_demand": False,
+        "quality": "national_context",
+        "scope": "national",
+        "comparison_mode": "context_only",
+        "market_demand_wording_allowed": False,
     },
     "historical_production_baseline": {
         "label": "Historical production baseline (not market demand)",
         "evidence_note": (
-            "Compared against historical production only. "
-            "This is not market demand."
+            "Historical production can show how a plan compares with past "
+            "supply. It is not market demand."
         ),
-        "is_market_demand": False,
+        "quality": "production_baseline",
+        "scope": "declared_geography",
+        "comparison_mode": "baseline",
+        "market_demand_wording_allowed": False,
     },
     "demo_coordination_baseline": {
         "label": "Demo coordination baseline (not market demand)",
         "evidence_note": (
-            "Synthetic DEMO-2026 baseline for reproducibility. "
-            "This is not observed local market demand."
+            "Synthetic DEMO-2026 baseline used only for a reproducible demo. "
+            "It is not observed local market demand."
         ),
-        "is_market_demand": False,
+        "quality": "synthetic",
+        "scope": "demo",
+        "comparison_mode": "demo",
+        "market_demand_wording_allowed": False,
     },
 }
 
 
 def normalize_reference_type(value):
-    """Return the canonical reference type string, or None when missing."""
+    """Return a trimmed reference type, or None when it is missing."""
     if value is None:
         return None
     text = str(value).strip()
-    if not text:
-        return None
-    return text
+    return text or None
+
+
+def reference_metadata(reference_type):
+    """Return a copy of the reference metadata, or None when unknown."""
+    canonical = normalize_reference_type(reference_type)
+    record = REFERENCE_TYPES.get(canonical) if canonical else None
+    return dict(record) if record else None
 
 
 def describe_reference(reference_type):
-    """Return the display label and evidence note for a reference type."""
-    canonical = normalize_reference_type(reference_type)
-    if canonical is None:
-        return (None, None)
-    record = REFERENCE_TYPES.get(canonical)
+    """Return the user label and evidence note for a reference type."""
+    record = reference_metadata(reference_type)
     if record is None:
         return (None, None)
     return (record["label"], record["evidence_note"])
 
 
-def is_market_demand_reference(reference_type):
-    """Return True only for references that may be called market demand."""
-    canonical = normalize_reference_type(reference_type)
-    record = REFERENCE_TYPES.get(canonical) if canonical else None
-    return bool(record and record["is_market_demand"])
+def allows_market_demand_wording(reference_type):
+    """Return True only when the reference may be called market demand."""
+    record = reference_metadata(reference_type)
+    return bool(record and record["market_demand_wording_allowed"])
 
 
 def valid_reference_types():
-    """Return the sorted list of accepted reference type strings."""
+    """Return all accepted reference type strings."""
     return sorted(REFERENCE_TYPES)
+
+
+def normalize_source_labels(source_labels):
+    """Return clean, de-duplicated source labels while keeping order."""
+    if source_labels is None:
+        return []
+    if isinstance(source_labels, str):
+        values = [source_labels]
+    else:
+        try:
+            values = list(source_labels)
+        except TypeError:
+            values = [source_labels]
+
+    result = []
+    seen = set()
+    for value in values:
+        text = str(value).strip()
+        if text and text not in seen:
+            result.append(text)
+            seen.add(text)
+    return result
 
 
 def _finite_number(value, name):
@@ -95,6 +131,38 @@ def _finite_number(value, name):
     if not math.isfinite(number):
         raise ValueError(f"{name} must be finite")
     return number
+
+
+def _same_text(first, second):
+    return str(first).strip().casefold() == str(second).strip().casefold()
+
+
+def _plan_value(plan, keys):
+    for key in keys:
+        if key in plan and str(plan[key]).strip():
+            return plan[key]
+    return None
+
+
+def validate_plan_context(plans, crop, location, harvest_period):
+    """Reject plan rows that explicitly belong to another context."""
+    for plan in plans:
+        if not isinstance(plan, dict):
+            return (False, "Every farm plan must be a record.")
+
+        plan_crop = _plan_value(plan, ("crop_canonical", "crop"))
+        if plan_crop is not None and not _same_text(plan_crop, crop):
+            return (False, "A farm plan belongs to a different crop.")
+
+        plan_location = _plan_value(plan, ("municipality", "location"))
+        if plan_location is not None and not _same_text(plan_location, location):
+            return (False, "A farm plan belongs to a different location.")
+
+        plan_period = _plan_value(plan, ("harvest_period",))
+        if plan_period is not None and not _same_text(plan_period, harvest_period):
+            return (False, "A farm plan belongs to a different harvest period.")
+
+    return (True, None)
 
 
 def area_range(estimate_ha, margin_ha):
@@ -121,7 +189,7 @@ def collective_area_range(plans):
 
 
 def planned_supply_range(area_low, area_high, yield_mt_per_ha):
-    """Convert an area range into an expected supply range."""
+    """Convert an area range into an expected supply range in MT."""
     if yield_mt_per_ha is None:
         return None
     try:
@@ -153,11 +221,7 @@ def supply_load_range(supply_low, supply_high, reference_amount):
 
 
 def validate_bands(bands):
-    """Validate caller-provided risk bands.
-
-    Bands must use strictly increasing upper limits and the final limit must
-    be positive infinity. Labels must be unique non-empty strings.
-    """
+    """Validate caller-provided risk bands."""
     if not bands:
         raise ValueError("bands must be a non-empty list of (upper, label)")
 
@@ -244,11 +308,20 @@ def _result_base(crop, location, harvest_period):
         "yield_source": None,
         "planned_supply_range": None,
         "reference_amount": None,
+        "reference_unit": None,
         "reference_type": None,
+        "reference_geography": None,
+        "reference_period": None,
         "reference_label": None,
         "reference_evidence_note": None,
+        "reference_quality": None,
+        "reference_scope": None,
+        "reference_mode": None,
+        "market_demand_wording_allowed": False,
         "supply_load_range": None,
         "status": "unclassified",
+        "comparison_state": None,
+        "comparison_band_range": None,
         "risk_state": None,
         "risk_band_range": None,
         "borderline": False,
@@ -266,26 +339,36 @@ def compute_grci(
     reference_yield,
     yield_source,
     reference_amount,
+    reference_unit,
     reference_type,
+    reference_geography,
+    reference_period,
     crop_record,
     bands=None,
     source_labels=None,
 ):
-    """Compute one reproducible GRCI result.
-
-    Expected user or data problems return a result with a clear status.
-    Malformed risk-band configuration raises ValueError because it is a
-    programming or configuration error.
-    Reference quality is explicit: reference_type must be one of
-    valid_reference_types(). Historical production must never be labelled
-    as market demand; use describe_reference() for user wording.
-    """
+    """Compute one reproducible GRCI result."""
     result = _result_base(crop, location, harvest_period)
     result["reference_yield"] = reference_yield
     result["yield_source"] = yield_source
     result["reference_amount"] = reference_amount
+    result["reference_unit"] = (
+        str(reference_unit).strip().upper()
+        if reference_unit is not None
+        else None
+    )
     result["reference_type"] = normalize_reference_type(reference_type)
-    result["source_labels"] = list(source_labels) if source_labels else []
+    result["reference_geography"] = (
+        str(reference_geography).strip()
+        if reference_geography is not None
+        else None
+    )
+    result["reference_period"] = (
+        str(reference_period).strip()
+        if reference_period is not None
+        else None
+    )
+    result["source_labels"] = normalize_source_labels(source_labels)
 
     if crop is None or not str(crop).strip():
         result["status"] = "incomplete"
@@ -314,6 +397,75 @@ def compute_grci(
         result["status"] = "incomplete"
         result["uncertainty_note"] = "No farm plans provided."
         return result
+
+    context_ok, context_error = validate_plan_context(
+        plans,
+        crop,
+        location,
+        harvest_period,
+    )
+    if not context_ok:
+        result["status"] = "invalid"
+        result["uncertainty_note"] = context_error
+        return result
+
+    canonical_reference = normalize_reference_type(reference_type)
+    if canonical_reference is None:
+        result["status"] = "incomplete"
+        result["uncertainty_note"] = "Missing reference type."
+        return result
+
+    metadata = reference_metadata(canonical_reference)
+    if metadata is None:
+        result["status"] = "invalid"
+        result["uncertainty_note"] = (
+            "Unknown reference type. Expected one of: "
+            + ", ".join(valid_reference_types())
+            + "."
+        )
+        return result
+
+    result["reference_label"] = metadata["label"]
+    result["reference_evidence_note"] = metadata["evidence_note"]
+    result["reference_quality"] = metadata["quality"]
+    result["reference_scope"] = metadata["scope"]
+    result["reference_mode"] = metadata["comparison_mode"]
+    result["market_demand_wording_allowed"] = metadata[
+        "market_demand_wording_allowed"
+    ]
+
+    if result["reference_unit"] != "MT":
+        result["status"] = "invalid"
+        result["uncertainty_note"] = (
+            "Reference amount must use MT so it matches planned supply."
+        )
+        return result
+
+    if not result["reference_geography"]:
+        result["status"] = "incomplete"
+        result["uncertainty_note"] = "Missing reference geography."
+        return result
+
+    if not result["reference_period"]:
+        result["status"] = "incomplete"
+        result["uncertainty_note"] = "Missing reference period."
+        return result
+
+    if metadata["scope"] == "national":
+        if "philipp" not in result["reference_geography"].casefold():
+            result["status"] = "invalid"
+            result["uncertainty_note"] = (
+                "National utilization context must keep its national geography."
+            )
+            return result
+
+    if metadata["scope"] == "local":
+        if "philipp" in result["reference_geography"].casefold():
+            result["status"] = "invalid"
+            result["uncertainty_note"] = (
+                "A local reference cannot use a national geography."
+            )
+            return result
 
     try:
         area_low, area_high = collective_area_range(plans)
@@ -370,24 +522,13 @@ def compute_grci(
         result["uncertainty_note"] = "Reference amount must be greater than zero."
         return result
 
-    canonical_reference = normalize_reference_type(reference_type)
-    if canonical_reference is None:
-        result["status"] = "incomplete"
-        result["uncertainty_note"] = "Missing reference type."
-        return result
-
-    if canonical_reference not in REFERENCE_TYPES:
-        result["status"] = "incomplete"
+    if metadata["comparison_mode"] == "context_only":
+        result["status"] = "context_only"
         result["uncertainty_note"] = (
-            "Unknown reference type. Expected one of: "
-            + ", ".join(valid_reference_types())
-            + "."
+            "This reference is context only. TANIM does not compare local "
+            "planned supply with a national utilization amount."
         )
         return result
-
-    label, evidence_note = describe_reference(canonical_reference)
-    result["reference_label"] = label
-    result["reference_evidence_note"] = evidence_note
 
     load = supply_load_range(supply[0], supply[1], reference_value)
     result["supply_load_range"] = list(load)
@@ -396,26 +537,42 @@ def compute_grci(
         result["status"] = "unclassified"
         result["uncertainty_note"] = (
             "Risk bands are not configured. Supply load is available but "
-            "has no risk label."
+            "has no comparison label."
         )
         return result
 
     low_band, high_band, borderline = classify_range(load[0], load[1], bands)
-    result["status"] = "ok"
-    result["risk_band_range"] = [low_band, high_band]
+    state = "borderline" if borderline else low_band
+    result["comparison_state"] = state
+    result["comparison_band_range"] = [low_band, high_band]
     result["borderline"] = borderline
 
+    mode = metadata["comparison_mode"]
+    if mode == "baseline":
+        result["status"] = "baseline"
+        if borderline:
+            result["uncertainty_note"] = (
+                f"Baseline comparison spans {low_band} to {high_band}. "
+                "Farm-size uncertainty can change the comparison band."
+            )
+        elif area_low != area_high:
+            result["uncertainty_note"] = (
+                "Farm size is approximate, so the baseline comparison is a range."
+            )
+        return result
+
+    result["status"] = "ok"
+    result["risk_state"] = state
+    result["risk_band_range"] = [low_band, high_band]
+
     if borderline:
-        result["risk_state"] = "borderline"
         result["uncertainty_note"] = (
             f"Supply load spans {low_band} to {high_band}. The farm-size "
             "estimate can change the final band."
         )
-    else:
-        result["risk_state"] = low_band
-        if area_low != area_high:
-            result["uncertainty_note"] = (
-                "Farm size is approximate, so supply load is shown as a range."
-            )
+    elif area_low != area_high:
+        result["uncertainty_note"] = (
+            "Farm size is approximate, so supply load is shown as a range."
+        )
 
     return result
