@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+.env
+.env.*
+.vercel/
+web/node_modules/
+web/dist/
+.DS_Store

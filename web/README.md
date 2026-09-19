@@ -1,50 +1,38 @@
 # TANIM farmer UI
 
-This is the Step 7 farmer-facing MVP. React displays results from the local
-Python service. The browser does not calculate GRCI values.
+This is the Step 7 farmer-facing MVP. React displays results from the Python service. The browser does not calculate GRCI values.
 
-## Run the integrated MVP
+## Run locally
 
-Terminal 1:
+Start the backend from the repository root:
 
-```sh
-python scripts/service.py --serve
-```
+    python scripts/service.py --serve
 
-Terminal 2:
+Then start the web app:
 
-```sh
-cd web
-npm ci
-npm run dev
-```
+    cd web
+    npm ci
+    npm run dev
 
 Open `http://localhost:5173`.
 
-The frontend and backend use committed local files. PSA OpenSTAT is not called
-during the live demo.
+The frontend and backend use committed local files. PSA OpenSTAT is not called during the live demo.
 
-The form loads crop and region choices from `GET /api/options`. It only shows
-crop-region pairs backed by the committed five-year yield summary. The fixed
-Tomato and Eggplant buttons use the locked synthetic demo reference. For other
-plans, the user must enter a comparison amount, evidence type, geography,
-period, and source label. These fields are marked
-`user_provided_unverified`. Direct local committed demand is reserved for a
-reviewed source integration. TANIM does not invent a demand value.
+The form loads crop and region choices from `GET /api/options`. It only shows crop-region pairs backed by the committed five-year yield summary. The fixed Tomato and Eggplant buttons use the locked synthetic demo reference. Other plans require a comparison amount, evidence type, geography, period, and source label. These fields are marked `user_provided_unverified`.
+
+## Vercel
+
+The repository root contains `vercel.json`. Vercel builds this `web` folder and exposes the same Python service through thin files in `../api/`. See [../docs/DEPLOYMENT.md](../docs/DEPLOYMENT.md).
 
 ## Fixed fallback
 
-Set `VITE_USE_MOCK=true` only when you need the two committed fixed demo
-screens without the backend. Mock mode does not load the full crop registry and
-does not accept arbitrary farmer plans.
+Set `VITE_USE_MOCK=true` only when you need the two committed fixed demo screens without a backend. Mock mode does not load the full crop registry and does not accept arbitrary farmer plans.
 
 ## Build
 
-```sh
-npm run build
-npm run preview
-```
+    npm run build
+    npm run preview
 
-Preview also proxies `/api` to the local service.
+Preview proxies `/api` to the local service.
 
-See [openapi-note.md](openapi-note.md) for the request and response contract.
+See [../docs/API_CONTRACT.md](../docs/API_CONTRACT.md) for the request and response contract.

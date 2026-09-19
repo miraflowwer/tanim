@@ -1,4 +1,4 @@
-name: TANIM audit
+name: TANIM CI
 
 on:
   push:
@@ -27,6 +27,7 @@ jobs:
           python tests/test_grci.py
           python tests/test_service.py
           python tests/test_mvp_e2e.py
+          python tests/test_deployment.py
 
   frontend-audit:
     runs-on: ubuntu-latest

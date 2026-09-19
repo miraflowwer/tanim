@@ -289,7 +289,7 @@ def test_demo_runbook_matches_locked_values():
     ):
         assert text in runbook
 
-    design = (ROOT / "web" / "DESIGN.md").read_text(encoding="utf-8")
+    design = (ROOT / "docs" / "WEB_DESIGN.md").read_text(encoding="utf-8")
     assert "user_provided_unverified" in design
     assert "local_committed_demand" in design
     assert "COMMITTED LOCAL" not in design

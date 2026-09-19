@@ -20,7 +20,7 @@ This is the small design guide for the Step 7 farmer interface.
 Use one main column. Use large buttons and form fields. Keep base text at
 18 px. Use system fonts so the demo does not need a font download.
 
-Color tokens and spacing values are in `src/styles.css`.
+Color tokens and spacing values are in `../web/src/styles.css`.
 
 ## Form
 
