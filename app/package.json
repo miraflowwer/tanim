@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
-    "test": "node --test tests/contract.mjs tests/budget.mjs"
+    "test": "node --test tests/contract.mjs tests/budget.mjs tests/member2.mjs"
   },
   "dependencies": {
     "react": "^18.3.1",

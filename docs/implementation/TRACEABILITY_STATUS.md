@@ -22,11 +22,11 @@ This is the live implementation status, not a replacement for the finalized prod
 | Auth/account frontend | Member 1 | Ready |
 | Organization onboarding frontend | Member 1 | Ready |
 | Farmer workspace | Member 1 | Ready |
-| Coordinator workspace | Member 2 | Ready |
-| Maps/charts/context | Member 2 | Ready |
-| Evidence/Reviewer | Member 2 | Ready |
-| Admin/governance | Member 2 | Ready |
-| Notifications/search/history | Member 2 | Ready |
+| Coordinator workspace | Member 2 | In review | `feat/m2-operations-frontend` attention, plan detail, map, timeline |
+| Maps/charts/context | Member 2 | In review | `feat/m2-operations-frontend` charts, map panel, context cards |
+| Evidence/Reviewer | Member 2 | In review | `feat/m2-operations-frontend` queue, detail, candidate, correct, supersede |
+| Admin/governance | Member 2 | In review | `feat/m2-operations-frontend` members, audit, exports, policy |
+| Notifications/search/history | Member 2 | In review | `feat/m2-operations-frontend` inbox fixtures, scoped search, history |
 | PostgreSQL/API durability | Member 3 | Ready |
 | Data ingestion/versioning | Member 3 | Ready |
 | Security/observability/operations | Member 3 | Ready |

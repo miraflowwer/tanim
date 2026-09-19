@@ -128,7 +128,7 @@ export interface Plan {
 }
 
 export type PlanState = "Draft" | "Planned" | "Harvested" | "Cancelled";
-export type Role = "farmer" | "reviewer";
+export type Role = "farmer" | "coordinator" | "reviewer" | "admin";
 
 export interface CropEntry {
   code: string;
