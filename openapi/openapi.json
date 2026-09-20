@@ -1,15 +1,11 @@
 {
   "components": {
     "schemas": {
-      "ConsentIn": {
+      "ConsentPayload": {
         "additionalProperties": false,
-        "description": "Explicit consent, one purpose at a time (PRD §8.7).",
         "properties": {
           "consent_type": {
-            "enum": [
-              "operational",
-              "research"
-            ],
+            "pattern": "^(operational|research)$",
             "title": "Consent Type",
             "type": "string"
           },
@@ -31,28 +27,10 @@
           "purpose",
           "policy_version"
         ],
-        "title": "ConsentIn",
+        "title": "ConsentPayload",
         "type": "object"
       },
-      "ConsentWithdrawIn": {
-        "additionalProperties": false,
-        "properties": {
-          "consent_type": {
-            "enum": [
-              "operational",
-              "research"
-            ],
-            "title": "Consent Type",
-            "type": "string"
-          }
-        },
-        "required": [
-          "consent_type"
-        ],
-        "title": "ConsentWithdrawIn",
-        "type": "object"
-      },
-      "ExportIn": {
+      "ExportPayload": {
         "additionalProperties": false,
         "properties": {
           "include_individuals": {
@@ -77,12 +55,11 @@
           "organization_id",
           "purpose"
         ],
-        "title": "ExportIn",
+        "title": "ExportPayload",
         "type": "object"
       },
-      "FarmIn": {
+      "FarmPayload": {
         "additionalProperties": false,
-        "description": "Farm record — exact GPS never required (PRD §19).",
         "properties": {
           "municipality": {
             "anyOf": [
@@ -138,7 +115,7 @@
           "organization_id",
           "name"
         ],
-        "title": "FarmIn",
+        "title": "FarmPayload",
         "type": "object"
       },
       "HTTPValidationError": {
@@ -154,9 +131,141 @@
         "title": "HTTPValidationError",
         "type": "object"
       },
-      "PlanIn": {
+      "IngestionPayload": {
         "additionalProperties": false,
-        "description": "Farmer input only — no evidence fields from client (PRD §10.2).",
+        "properties": {
+          "idempotency_key": {
+            "anyOf": [
+              {
+                "maxLength": 160,
+                "minLength": 8,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Idempotency Key"
+          },
+          "kind": {
+            "default": "managed",
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Kind",
+            "type": "string"
+          },
+          "name": {
+            "default": "TANIM source",
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "promote": {
+            "default": false,
+            "title": "Promote",
+            "type": "boolean"
+          },
+          "rows": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "maxItems": 100000,
+            "minItems": 1,
+            "title": "Rows",
+            "type": "array"
+          },
+          "source_key": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Source Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_key",
+          "rows"
+        ],
+        "title": "IngestionPayload",
+        "type": "object"
+      },
+      "InvitationPayload": {
+        "additionalProperties": false,
+        "properties": {
+          "email": {
+            "maxLength": 320,
+            "minLength": 3,
+            "title": "Email",
+            "type": "string"
+          },
+          "expires_in_days": {
+            "default": 7,
+            "maximum": 30.0,
+            "minimum": 1.0,
+            "title": "Expires In Days",
+            "type": "integer"
+          },
+          "role": {
+            "pattern": "^(farmer|coordinator|reviewer|org_admin)$",
+            "title": "Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "role"
+        ],
+        "title": "InvitationPayload",
+        "type": "object"
+      },
+      "OrganizationPayload": {
+        "additionalProperties": false,
+        "properties": {
+          "default_geography": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Geography"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 160,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "slug": {
+            "anyOf": [
+              {
+                "maxLength": 100,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Slug"
+          }
+        },
+        "title": "OrganizationPayload",
+        "type": "object"
+      },
+      "PlanPayload": {
+        "additionalProperties": false,
         "properties": {
           "area_ha": {
             "exclusiveMinimum": 0.0,
@@ -165,7 +274,7 @@
             "type": "number"
           },
           "area_margin_ha": {
-            "default": 0.0,
+            "default": 0,
             "maximum": 10000.0,
             "minimum": 0.0,
             "title": "Area Margin Ha",
@@ -178,16 +287,10 @@
             "type": "string"
           },
           "farm_id": {
-            "anyOf": [
-              {
-                "maxLength": 64,
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Farm Id"
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Farm Id",
+            "type": "string"
           },
           "harvest_period": {
             "format": "date",
@@ -204,96 +307,27 @@
             "format": "date",
             "title": "Planting Date",
             "type": "string"
+          },
+          "status": {
+            "default": "draft",
+            "pattern": "^(draft|planned|harvested|cancelled)$",
+            "title": "Status",
+            "type": "string"
           }
         },
         "required": [
           "crop_code",
           "organization_id",
+          "farm_id",
           "area_ha",
           "planting_date",
           "harvest_period"
         ],
-        "title": "PlanIn",
+        "title": "PlanPayload",
         "type": "object"
       },
-      "PlanPatchIn": {
+      "PolicyPayload": {
         "additionalProperties": false,
-        "description": "Plan adjustment — new revision, never overwrite (PRD §12).",
-        "properties": {
-          "area_ha": {
-            "anyOf": [
-              {
-                "exclusiveMinimum": 0.0,
-                "maximum": 10000.0,
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Area Ha"
-          },
-          "area_margin_ha": {
-            "anyOf": [
-              {
-                "maximum": 10000.0,
-                "minimum": 0.0,
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Area Margin Ha"
-          },
-          "harvest_period": {
-            "anyOf": [
-              {
-                "format": "date",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Harvest Period"
-          },
-          "planting_date": {
-            "anyOf": [
-              {
-                "format": "date",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Planting Date"
-          },
-          "status": {
-            "anyOf": [
-              {
-                "enum": [
-                  "draft",
-                  "planned",
-                  "harvested",
-                  "cancelled"
-                ],
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Status"
-          }
-        },
-        "title": "PlanPatchIn",
-        "type": "object"
-      },
-      "PolicyIn": {
-        "additionalProperties": false,
-        "description": "Threshold change — always a new version (PRD §12).",
         "properties": {
           "elevated_load": {
             "exclusiveMinimum": 0.0,
@@ -312,12 +346,11 @@
           "elevated_load",
           "high_load"
         ],
-        "title": "PolicyIn",
+        "title": "PolicyPayload",
         "type": "object"
       },
-      "ReferenceIn": {
+      "ReferencePayload": {
         "additionalProperties": false,
-        "description": "Candidate reference for review workflow (PRD §11.3). Never auto-verified.",
         "properties": {
           "amount_mt": {
             "exclusiveMinimum": 0.0,
@@ -386,13 +419,6 @@
             "type": "string"
           },
           "reference_type": {
-            "enum": [
-              "local_committed_demand",
-              "local_historical_absorption",
-              "national_utilization_context",
-              "historical_production_baseline",
-              "demo_coordination_baseline"
-            ],
             "title": "Reference Type",
             "type": "string"
           },
@@ -403,27 +429,26 @@
             "type": "string"
           },
           "unit": {
-            "const": "MT",
             "default": "MT",
+            "pattern": "^MT$",
             "title": "Unit",
             "type": "string"
           }
         },
         "required": [
-          "crop_code",
           "organization_id",
+          "crop_code",
           "amount_mt",
           "reference_type",
           "geography",
           "period",
           "source"
         ],
-        "title": "ReferenceIn",
+        "title": "ReferencePayload",
         "type": "object"
       },
-      "ReviewNoteIn": {
+      "ReviewPayload": {
         "additionalProperties": false,
-        "description": "Reviewer note for submit/verify/reject/flag transitions.",
         "properties": {
           "note": {
             "anyOf": [
@@ -438,19 +463,83 @@
             "title": "Note"
           }
         },
-        "title": "ReviewNoteIn",
+        "title": "ReviewPayload",
         "type": "object"
       },
-      "RoleChangeIn": {
+      "RevisionPayload": {
+        "additionalProperties": false,
+        "properties": {
+          "area_ha": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 10000.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Area Ha"
+          },
+          "area_margin_ha": {
+            "anyOf": [
+              {
+                "maximum": 10000.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Area Margin Ha"
+          },
+          "harvest_period": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Harvest Period"
+          },
+          "planting_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Planting Date"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "pattern": "^(draft|planned|harvested|cancelled)$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          }
+        },
+        "title": "RevisionPayload",
+        "type": "object"
+      },
+      "RolePayload": {
         "additionalProperties": false,
         "properties": {
           "role": {
-            "enum": [
-              "farmer",
-              "coordinator",
-              "reviewer",
-              "org_admin"
-            ],
+            "pattern": "^(farmer|coordinator|reviewer|org_admin)$",
             "title": "Role",
             "type": "string"
           }
@@ -458,24 +547,29 @@
         "required": [
           "role"
         ],
-        "title": "RoleChangeIn",
+        "title": "RolePayload",
         "type": "object"
       },
-      "SessionIn": {
+      "SettingPayload": {
         "additionalProperties": false,
-        "description": "DEV ONLY login helper — exchange a seeded user id for a dev token.",
         "properties": {
-          "user_id": {
-            "maxLength": 64,
+          "key": {
+            "maxLength": 80,
             "minLength": 1,
-            "title": "User Id",
+            "title": "Key",
             "type": "string"
+          },
+          "value": {
+            "additionalProperties": true,
+            "title": "Value",
+            "type": "object"
           }
         },
         "required": [
-          "user_id"
+          "key",
+          "value"
         ],
-        "title": "SessionIn",
+        "title": "SettingPayload",
         "type": "object"
       },
       "ValidationError": {
@@ -517,26 +611,48 @@
         ],
         "title": "ValidationError",
         "type": "object"
+      },
+      "WithdrawPayload": {
+        "additionalProperties": false,
+        "properties": {
+          "consent_type": {
+            "pattern": "^(operational|research)$",
+            "title": "Consent Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "consent_type"
+        ],
+        "title": "WithdrawPayload",
+        "type": "object"
       }
     }
   },
   "info": {
-    "title": "TANIM API",
-    "version": "0.1.0"
+    "title": "TANIM durable API",
+    "version": "0.3.0"
   },
   "openapi": "3.1.0",
   "paths": {
     "/api/v1/audit-events": {
       "get": {
-        "operationId": "list_audit_events_api_v1_audit_events_get",
+        "operationId": "audit_events_api_v1_audit_events_get",
         "parameters": [
           {
             "in": "query",
-            "name": "org_id",
-            "required": true,
+            "name": "organization_id",
+            "required": false,
             "schema": {
-              "title": "Org Id",
-              "type": "string"
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Organization Id"
             }
           },
           {
@@ -553,6 +669,34 @@
                 }
               ],
               "title": "Action"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
             }
           }
         ],
@@ -576,44 +720,23 @@
             "description": "Validation Error"
           }
         },
-        "summary": "List Audit Events"
+        "summary": "Audit Events"
       }
     },
     "/api/v1/auth/session": {
       "post": {
-        "description": "DEV ONLY login helper: exchange a seeded user id for a bearer token.",
-        "operationId": "create_session_api_v1_auth_session_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SessionIn"
-              }
-            }
-          },
-          "required": true
-        },
+        "operationId": "auth_session_api_v1_auth_session_post",
         "responses": {
-          "200": {
+          "405": {
             "content": {
               "application/json": {
                 "schema": {}
               }
             },
             "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
           }
         },
-        "summary": "Create Session"
+        "summary": "Auth Session"
       }
     },
     "/api/v1/calculations/{calculation_id}": {
@@ -627,6 +750,22 @@
             "schema": {
               "title": "Calculation Id",
               "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "organization_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Organization Id"
             }
           }
         ],
@@ -655,14 +794,14 @@
     },
     "/api/v1/consents": {
       "post": {
-        "operationId": "give_consent_api_v1_consents_post",
+        "operationId": "grant_consent_api_v1_consents_post",
         "parameters": [
           {
             "in": "query",
-            "name": "org_id",
+            "name": "organization_id",
             "required": true,
             "schema": {
-              "title": "Org Id",
+              "title": "Organization Id",
               "type": "string"
             }
           }
@@ -671,7 +810,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ConsentIn"
+                "$ref": "#/components/schemas/ConsentPayload"
               }
             }
           },
@@ -697,19 +836,19 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Give Consent"
+        "summary": "Grant Consent"
       }
     },
     "/api/v1/consents/me": {
       "get": {
-        "operationId": "my_consents_api_v1_consents_me_get",
+        "operationId": "get_consents_api_v1_consents_me_get",
         "parameters": [
           {
             "in": "query",
-            "name": "org_id",
+            "name": "organization_id",
             "required": true,
             "schema": {
-              "title": "Org Id",
+              "title": "Organization Id",
               "type": "string"
             }
           }
@@ -734,7 +873,7 @@
             "description": "Validation Error"
           }
         },
-        "summary": "My Consents"
+        "summary": "Get Consents"
       }
     },
     "/api/v1/consents/withdraw": {
@@ -743,10 +882,10 @@
         "parameters": [
           {
             "in": "query",
-            "name": "org_id",
+            "name": "organization_id",
             "required": true,
             "schema": {
-              "title": "Org Id",
+              "title": "Organization Id",
               "type": "string"
             }
           }
@@ -755,7 +894,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ConsentWithdrawIn"
+                "$ref": "#/components/schemas/WithdrawPayload"
               }
             }
           },
@@ -784,10 +923,132 @@
         "summary": "Withdraw Consent"
       }
     },
-    "/api/v1/context/climate": {
+    "/api/v1/context/{kind}": {
       "get": {
-        "operationId": "climate_api_v1_context_climate_get",
+        "operationId": "context_api_v1_context__kind__get",
         "parameters": [
+          {
+            "in": "path",
+            "name": "kind",
+            "required": true,
+            "schema": {
+              "title": "Kind",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "organization_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Organization Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Context"
+      }
+    },
+    "/api/v1/crops": {
+      "get": {
+        "operationId": "crops_api_v1_crops_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "organization_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Organization Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Crops"
+      }
+    },
+    "/api/v1/crops/{code}/yield": {
+      "get": {
+        "operationId": "crop_yield_api_v1_crops__code__yield_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "code",
+            "required": true,
+            "schema": {
+              "title": "Code",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "organization_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Organization Id"
+            }
+          },
           {
             "in": "query",
             "name": "geography",
@@ -825,16 +1086,16 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Climate"
+        "summary": "Crop Yield"
       }
     },
-    "/api/v1/context/suitability": {
+    "/api/v1/data-sources": {
       "get": {
-        "operationId": "suitability_api_v1_context_suitability_get",
+        "operationId": "data_sources_api_v1_data_sources_get",
         "parameters": [
           {
             "in": "query",
-            "name": "crop_code",
+            "name": "organization_id",
             "required": false,
             "schema": {
               "anyOf": [
@@ -845,7 +1106,7 @@
                   "type": "null"
                 }
               ],
-              "title": "Crop Code"
+              "title": "Organization Id"
             }
           }
         ],
@@ -869,119 +1130,36 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Suitability"
+        "summary": "Data Sources"
       }
     },
-    "/api/v1/context/weather": {
+    "/api/v1/data-sources/{key}": {
       "get": {
-        "operationId": "weather_api_v1_context_weather_get",
-        "parameters": [
-          {
-            "in": "query",
-            "name": "geography",
-            "required": true,
-            "schema": {
-              "title": "Geography",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Weather"
-      }
-    },
-    "/api/v1/crops": {
-      "get": {
-        "operationId": "list_crops_api_v1_crops_get",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            },
-            "description": "Successful Response"
-          }
-        },
-        "summary": "List Crops"
-      }
-    },
-    "/api/v1/crops/{code}": {
-      "get": {
-        "operationId": "get_crop_api_v1_crops__code__get",
+        "operationId": "data_source_detail_api_v1_data_sources__key__get",
         "parameters": [
           {
             "in": "path",
-            "name": "code",
+            "name": "key",
             "required": true,
             "schema": {
-              "title": "Code",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Get Crop"
-      }
-    },
-    "/api/v1/crops/{code}/yield": {
-      "get": {
-        "operationId": "crop_yield_api_v1_crops__code__yield_get",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "code",
-            "required": true,
-            "schema": {
-              "title": "Code",
+              "title": "Key",
               "type": "string"
             }
           },
           {
             "in": "query",
-            "name": "geography",
-            "required": true,
+            "name": "organization_id",
+            "required": false,
             "schema": {
-              "title": "Geography",
-              "type": "string"
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Organization Id"
             }
           }
         ],
@@ -1005,28 +1183,12 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Crop Yield"
-      }
-    },
-    "/api/v1/data-sources": {
-      "get": {
-        "operationId": "list_sources_api_v1_data_sources_get",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            },
-            "description": "Successful Response"
-          }
-        },
-        "summary": "List Sources"
+        "summary": "Data Source Detail"
       }
     },
     "/api/v1/data-sources/{key}/freshness": {
       "get": {
-        "operationId": "source_freshness_api_v1_data_sources__key__freshness_get",
+        "operationId": "data_source_freshness_api_v1_data_sources__key__freshness_get",
         "parameters": [
           {
             "in": "path",
@@ -1035,6 +1197,22 @@
             "schema": {
               "title": "Key",
               "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "organization_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Organization Id"
             }
           }
         ],
@@ -1058,12 +1236,12 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Source Freshness"
+        "summary": "Data Source Freshness"
       }
     },
     "/api/v1/data-sources/{key}/promote": {
       "post": {
-        "operationId": "promote_source_api_v1_data_sources__key__promote_post",
+        "operationId": "promote_version_compat_api_v1_data_sources__key__promote_post",
         "parameters": [
           {
             "in": "path",
@@ -1072,6 +1250,31 @@
             "schema": {
               "title": "Key",
               "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "version",
+            "required": true,
+            "schema": {
+              "title": "Version",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "organization_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Organization Id"
             }
           }
         ],
@@ -1095,17 +1298,168 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Promote Source"
+        "summary": "Promote Version Compat"
+      }
+    },
+    "/api/v1/data-sources/{key}/versions": {
+      "get": {
+        "operationId": "data_source_versions_api_v1_data_sources__key__versions_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "title": "Key",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "organization_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Organization Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Data Source Versions"
       }
     },
     "/api/v1/exports": {
+      "get": {
+        "operationId": "list_exports_api_v1_exports_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "organization_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Organization Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Exports"
+      },
       "post": {
         "operationId": "create_export_api_v1_exports_post",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ExportIn"
+                "$ref": "#/components/schemas/ExportPayload"
               }
             }
           },
@@ -1146,6 +1500,22 @@
               "title": "Export Id",
               "type": "string"
             }
+          },
+          {
+            "in": "query",
+            "name": "organization_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Organization Id"
+            }
           }
         ],
         "responses": {
@@ -1177,11 +1547,46 @@
         "parameters": [
           {
             "in": "query",
-            "name": "org_id",
-            "required": true,
+            "name": "organization_id",
+            "required": false,
             "schema": {
-              "title": "Org Id",
-              "type": "string"
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Organization Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
             }
           }
         ],
@@ -1209,29 +1614,11 @@
       },
       "post": {
         "operationId": "create_farm_api_v1_farms_post",
-        "parameters": [
-          {
-            "in": "query",
-            "name": "org_id",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Org Id"
-            }
-          }
-        ],
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/FarmIn"
+                "$ref": "#/components/schemas/FarmPayload"
               }
             }
           },
@@ -1272,15 +1659,19 @@
               "title": "Farm Id",
               "type": "string"
             }
+          },
+          {
+            "in": "query",
+            "name": "organization_id",
+            "required": true,
+            "schema": {
+              "title": "Organization Id",
+              "type": "string"
+            }
           }
         ],
         "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            },
+          "204": {
             "description": "Successful Response"
           },
           "422": {
@@ -1307,6 +1698,22 @@
               "title": "Farm Id",
               "type": "string"
             }
+          },
+          {
+            "in": "query",
+            "name": "organization_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Organization Id"
+            }
           }
         ],
         "responses": {
@@ -1332,7 +1739,7 @@
         "summary": "Get Farm"
       },
       "patch": {
-        "operationId": "update_farm_api_v1_farms__farm_id__patch",
+        "operationId": "patch_farm_api_v1_farms__farm_id__patch",
         "parameters": [
           {
             "in": "path",
@@ -1348,7 +1755,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/FarmIn"
+                "$ref": "#/components/schemas/FarmPayload"
               }
             }
           },
@@ -1374,7 +1781,7 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Update Farm"
+        "summary": "Patch Farm"
       }
     },
     "/api/v1/health": {
@@ -1409,12 +1816,174 @@
         "summary": "Me"
       }
     },
-    "/api/v1/observability/calculations": {
+    "/api/v1/metrics": {
       "get": {
-        "operationId": "recent_calculations_api_v1_observability_calculations_get",
+        "operationId": "metrics_api_v1_metrics_get",
+        "responses": {
+          "200": {
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Metrics"
+      }
+    },
+    "/api/v1/notifications": {
+      "get": {
+        "operationId": "notifications_api_v1_notifications_get",
         "parameters": [
           {
             "in": "query",
+            "name": "organization_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Organization Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unread_only",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Unread Only",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Notifications"
+      }
+    },
+    "/api/v1/notifications/{notification_id}/read": {
+      "post": {
+        "operationId": "mark_notification_api_v1_notifications__notification_id__read_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "notification_id",
+            "required": true,
+            "schema": {
+              "title": "Notification Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "organization_id",
+            "required": true,
+            "schema": {
+              "title": "Organization Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Mark Notification"
+      }
+    },
+    "/api/v1/observability/calculations": {
+      "get": {
+        "operationId": "calculation_observability_api_v1_observability_calculations_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Calculation Observability"
+      }
+    },
+    "/api/v1/organizations/{org_id}": {
+      "get": {
+        "operationId": "get_organization_api_v1_organizations__org_id__get",
+        "parameters": [
+          {
+            "in": "path",
             "name": "org_id",
             "required": true,
             "schema": {
@@ -1443,7 +2012,52 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Recent Calculations"
+        "summary": "Get Organization"
+      },
+      "patch": {
+        "operationId": "patch_organization_api_v1_organizations__org_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_id",
+            "required": true,
+            "schema": {
+              "title": "Org Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrganizationPayload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Patch Organization"
       }
     },
     "/api/v1/organizations/{org_id}/aggregates": {
@@ -1457,22 +2071,6 @@
             "schema": {
               "title": "Org Id",
               "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "harvest_period",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Harvest Period"
             }
           }
         ],
@@ -1499,9 +2097,9 @@
         "summary": "Aggregates"
       }
     },
-    "/api/v1/organizations/{org_id}/members/{member_id}": {
-      "delete": {
-        "operationId": "remove_member_api_v1_organizations__org_id__members__member_id__delete",
+    "/api/v1/organizations/{org_id}/attention-items": {
+      "get": {
+        "operationId": "attention_items_api_v1_organizations__org_id__attention_items_get",
         "parameters": [
           {
             "in": "path",
@@ -1509,15 +2107,6 @@
             "required": true,
             "schema": {
               "title": "Org Id",
-              "type": "string"
-            }
-          },
-          {
-            "in": "path",
-            "name": "member_id",
-            "required": true,
-            "schema": {
-              "title": "Member Id",
               "type": "string"
             }
           }
@@ -1542,10 +2131,316 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Remove Member"
+        "summary": "Attention Items"
+      }
+    },
+    "/api/v1/organizations/{org_id}/geo-aggregates": {
+      "get": {
+        "operationId": "geo_aggregates_api_v1_organizations__org_id__geo_aggregates_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_id",
+            "required": true,
+            "schema": {
+              "title": "Org Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Geo Aggregates"
+      }
+    },
+    "/api/v1/organizations/{org_id}/invitations": {
+      "get": {
+        "operationId": "list_invitations_api_v1_organizations__org_id__invitations_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_id",
+            "required": true,
+            "schema": {
+              "title": "Org Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Invitations"
       },
-      "put": {
-        "operationId": "change_role_api_v1_organizations__org_id__members__member_id__put",
+      "post": {
+        "operationId": "create_invitation_api_v1_organizations__org_id__invitations_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_id",
+            "required": true,
+            "schema": {
+              "title": "Org Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InvitationPayload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Invitation"
+      }
+    },
+    "/api/v1/organizations/{org_id}/map-data": {
+      "get": {
+        "operationId": "map_data_api_v1_organizations__org_id__map_data_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_id",
+            "required": true,
+            "schema": {
+              "title": "Org Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Map Data"
+      }
+    },
+    "/api/v1/organizations/{org_id}/members": {
+      "get": {
+        "operationId": "list_members_api_v1_organizations__org_id__members_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_id",
+            "required": true,
+            "schema": {
+              "title": "Org Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Members"
+      }
+    },
+    "/api/v1/organizations/{org_id}/members/{member_id}": {
+      "delete": {
+        "operationId": "delete_member_api_v1_organizations__org_id__members__member_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_id",
+            "required": true,
+            "schema": {
+              "title": "Org Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "member_id",
+            "required": true,
+            "schema": {
+              "title": "Member Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Member"
+      },
+      "patch": {
+        "operationId": "patch_member_api_v1_organizations__org_id__members__member_id__patch",
         "parameters": [
           {
             "in": "path",
@@ -1570,7 +2465,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/RoleChangeIn"
+                "$ref": "#/components/schemas/RolePayload"
               }
             }
           },
@@ -1596,7 +2491,126 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Change Role"
+        "summary": "Patch Member"
+      }
+    },
+    "/api/v1/organizations/{org_id}/settings": {
+      "get": {
+        "operationId": "get_settings_api_v1_organizations__org_id__settings_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_id",
+            "required": true,
+            "schema": {
+              "title": "Org Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Settings"
+      },
+      "patch": {
+        "operationId": "patch_settings_api_v1_organizations__org_id__settings_patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_id",
+            "required": true,
+            "schema": {
+              "title": "Org Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SettingPayload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Patch Settings"
+      }
+    },
+    "/api/v1/organizations/{org_id}/timeline": {
+      "get": {
+        "operationId": "timeline_api_v1_organizations__org_id__timeline_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_id",
+            "required": true,
+            "schema": {
+              "title": "Org Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Timeline"
       }
     },
     "/api/v1/plans": {
@@ -1605,11 +2619,78 @@
         "parameters": [
           {
             "in": "query",
-            "name": "org_id",
-            "required": true,
+            "name": "organization_id",
+            "required": false,
             "schema": {
-              "title": "Org Id",
-              "type": "string"
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Organization Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "crop_code",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Crop Code"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
             }
           }
         ],
@@ -1637,29 +2718,11 @@
       },
       "post": {
         "operationId": "create_plan_api_v1_plans_post",
-        "parameters": [
-          {
-            "in": "query",
-            "name": "org_id",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Org Id"
-            }
-          }
-        ],
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PlanIn"
+                "$ref": "#/components/schemas/PlanPayload"
               }
             }
           },
@@ -1690,7 +2753,7 @@
     },
     "/api/v1/plans/{plan_id}": {
       "delete": {
-        "operationId": "delete_plan_api_v1_plans__plan_id__delete",
+        "operationId": "cancel_plan_api_v1_plans__plan_id__delete",
         "parameters": [
           {
             "in": "path",
@@ -1698,6 +2761,15 @@
             "required": true,
             "schema": {
               "title": "Plan Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "organization_id",
+            "required": true,
+            "schema": {
+              "title": "Organization Id",
               "type": "string"
             }
           }
@@ -1722,7 +2794,7 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Delete Plan"
+        "summary": "Cancel Plan"
       },
       "get": {
         "operationId": "get_plan_api_v1_plans__plan_id__get",
@@ -1738,7 +2810,7 @@
           },
           {
             "in": "query",
-            "name": "org_id",
+            "name": "organization_id",
             "required": false,
             "schema": {
               "anyOf": [
@@ -1749,7 +2821,7 @@
                   "type": "null"
                 }
               ],
-              "title": "Org Id"
+              "title": "Organization Id"
             }
           }
         ],
@@ -1776,7 +2848,7 @@
         "summary": "Get Plan"
       },
       "patch": {
-        "operationId": "update_plan_api_v1_plans__plan_id__patch",
+        "operationId": "patch_plan_api_v1_plans__plan_id__patch",
         "parameters": [
           {
             "in": "path",
@@ -1786,13 +2858,22 @@
               "title": "Plan Id",
               "type": "string"
             }
+          },
+          {
+            "in": "query",
+            "name": "organization_id",
+            "required": true,
+            "schema": {
+              "title": "Organization Id",
+              "type": "string"
+            }
           }
         ],
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PlanPatchIn"
+                "$ref": "#/components/schemas/RevisionPayload"
               }
             }
           },
@@ -1818,7 +2899,7 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Update Plan"
+        "summary": "Patch Plan"
       }
     },
     "/api/v1/plans/{plan_id}/calculate": {
@@ -1836,7 +2917,7 @@
           },
           {
             "in": "query",
-            "name": "org_id",
+            "name": "organization_id",
             "required": false,
             "schema": {
               "anyOf": [
@@ -1847,7 +2928,88 @@
                   "type": "null"
                 }
               ],
-              "title": "Org Id"
+              "title": "Organization Id"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Calculate Plan"
+      }
+    },
+    "/api/v1/plans/{plan_id}/calculations": {
+      "get": {
+        "operationId": "plan_calculation_history_api_v1_plans__plan_id__calculations_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "plan_id",
+            "required": true,
+            "schema": {
+              "title": "Plan Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "organization_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Organization Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
             }
           }
         ],
@@ -1871,7 +3033,7 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Calculate Plan"
+        "summary": "Plan Calculation History"
       }
     },
     "/api/v1/plans/{plan_id}/revisions": {
@@ -1885,6 +3047,50 @@
             "schema": {
               "title": "Plan Id",
               "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "organization_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Organization Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
             }
           }
         ],
@@ -1911,14 +3117,335 @@
         "summary": "Plan Revisions"
       }
     },
-    "/api/v1/policies": {
+    "/api/v1/platform/data-sources": {
+      "get": {
+        "operationId": "platform_data_sources_api_v1_platform_data_sources_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Platform Data Sources"
+      }
+    },
+    "/api/v1/platform/data-sources/{key}/versions/{version}/promote": {
       "post": {
-        "operationId": "create_policy_api_v1_policies_post",
+        "operationId": "promote_version_api_v1_platform_data_sources__key__versions__version__promote_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "title": "Key",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "version",
+            "required": true,
+            "schema": {
+              "title": "Version",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "organization_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Organization Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Promote Version"
+      }
+    },
+    "/api/v1/platform/ingestion": {
+      "get": {
+        "operationId": "ingestion_runs_api_v1_platform_ingestion_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "source_key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Source Key"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Ingestion Runs"
+      },
+      "post": {
+        "operationId": "run_ingestion_api_v1_platform_ingestion_post",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PolicyIn"
+                "$ref": "#/components/schemas/IngestionPayload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Run Ingestion"
+      }
+    },
+    "/api/v1/platform/ingestion/{run_id}": {
+      "get": {
+        "operationId": "ingestion_run_api_v1_platform_ingestion__run_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Ingestion Run"
+      }
+    },
+    "/api/v1/platform/ingestion/{run_id}/retry": {
+      "post": {
+        "operationId": "retry_ingestion_api_v1_platform_ingestion__run_id__retry_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IngestionPayload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Retry Ingestion"
+      }
+    },
+    "/api/v1/policies": {
+      "get": {
+        "operationId": "policies_api_v1_policies_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "organization_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Organization Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Policies"
+      },
+      "post": {
+        "operationId": "create_policy_api_v1_policies_post",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "organization_id",
+            "required": true,
+            "schema": {
+              "title": "Organization Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PolicyPayload"
               }
             }
           },
@@ -1950,26 +3477,10 @@
     "/api/v1/policies/latest": {
       "get": {
         "operationId": "latest_policy_api_v1_policies_latest_get",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            },
-            "description": "Successful Response"
-          }
-        },
-        "summary": "Latest Policy"
-      }
-    },
-    "/api/v1/prices": {
-      "get": {
-        "operationId": "list_prices_api_v1_prices_get",
         "parameters": [
           {
             "in": "query",
-            "name": "crop_code",
+            "name": "organization_id",
             "required": false,
             "schema": {
               "anyOf": [
@@ -1980,7 +3491,7 @@
                   "type": "null"
                 }
               ],
-              "title": "Crop Code"
+              "title": "Organization Id"
             }
           }
         ],
@@ -2004,7 +3515,51 @@
             "description": "Validation Error"
           }
         },
-        "summary": "List Prices"
+        "summary": "Latest Policy"
+      }
+    },
+    "/api/v1/prices": {
+      "get": {
+        "operationId": "prices_api_v1_prices_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "organization_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Organization Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Prices"
       }
     },
     "/api/v1/readiness": {
@@ -2025,15 +3580,66 @@
     },
     "/api/v1/references": {
       "get": {
-        "operationId": "list_references_api_v1_references_get",
+        "operationId": "references_api_v1_references_get",
         "parameters": [
           {
             "in": "query",
-            "name": "org_id",
-            "required": true,
+            "name": "organization_id",
+            "required": false,
             "schema": {
-              "title": "Org Id",
-              "type": "string"
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Organization Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "crop_code",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Crop Code"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
             }
           }
         ],
@@ -2057,7 +3663,7 @@
             "description": "Validation Error"
           }
         },
-        "summary": "List References"
+        "summary": "References"
       },
       "post": {
         "operationId": "create_reference_api_v1_references_post",
@@ -2065,7 +3671,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ReferenceIn"
+                "$ref": "#/components/schemas/ReferencePayload"
               }
             }
           },
@@ -2094,16 +3700,25 @@
         "summary": "Create Reference"
       }
     },
-    "/api/v1/references/{ref_id}": {
+    "/api/v1/references/{reference_id}": {
       "get": {
-        "operationId": "get_reference_api_v1_references__ref_id__get",
+        "operationId": "get_reference_api_v1_references__reference_id__get",
         "parameters": [
           {
             "in": "path",
-            "name": "ref_id",
+            "name": "reference_id",
             "required": true,
             "schema": {
-              "title": "Ref Id",
+              "title": "Reference Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "organization_id",
+            "required": true,
+            "schema": {
+              "title": "Organization Id",
               "type": "string"
             }
           }
@@ -2129,16 +3744,36 @@
           }
         },
         "summary": "Get Reference"
-      },
-      "patch": {
-        "operationId": "correct_reference_api_v1_references__ref_id__patch",
+      }
+    },
+    "/api/v1/references/{reference_id}/{transition}": {
+      "post": {
+        "operationId": "transition_reference_api_v1_references__reference_id___transition__post",
         "parameters": [
           {
             "in": "path",
-            "name": "ref_id",
+            "name": "reference_id",
             "required": true,
             "schema": {
-              "title": "Ref Id",
+              "title": "Reference Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "transition",
+            "required": true,
+            "schema": {
+              "title": "Transition",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "organization_id",
+            "required": true,
+            "schema": {
+              "title": "Organization Id",
               "type": "string"
             }
           }
@@ -2147,7 +3782,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ReferenceIn"
+                "$ref": "#/components/schemas/ReviewPayload"
               }
             }
           },
@@ -2173,20 +3808,50 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Correct Reference"
+        "summary": "Transition Reference"
       }
     },
-    "/api/v1/references/{ref_id}/expire": {
-      "post": {
-        "operationId": "expire_reference_api_v1_references__ref_id__expire_post",
+    "/api/v1/search": {
+      "get": {
+        "operationId": "search_api_v1_search_get",
         "parameters": [
           {
-            "in": "path",
-            "name": "ref_id",
+            "in": "query",
+            "name": "q",
             "required": true,
             "schema": {
-              "title": "Ref Id",
+              "maxLength": 80,
+              "minLength": 2,
+              "title": "Q",
               "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "organization_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Organization Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 50,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
             }
           }
         ],
@@ -2210,289 +3875,7 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Expire Reference"
-      }
-    },
-    "/api/v1/references/{ref_id}/flag": {
-      "post": {
-        "operationId": "flag_reference_api_v1_references__ref_id__flag_post",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "ref_id",
-            "required": true,
-            "schema": {
-              "title": "Ref Id",
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ReviewNoteIn"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Flag Reference"
-      }
-    },
-    "/api/v1/references/{ref_id}/reject": {
-      "post": {
-        "operationId": "reject_reference_api_v1_references__ref_id__reject_post",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "ref_id",
-            "required": true,
-            "schema": {
-              "title": "Ref Id",
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ReviewNoteIn"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Reject Reference"
-      }
-    },
-    "/api/v1/references/{ref_id}/reopen": {
-      "post": {
-        "operationId": "reopen_reference_api_v1_references__ref_id__reopen_post",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "ref_id",
-            "required": true,
-            "schema": {
-              "title": "Ref Id",
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ReviewNoteIn"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Reopen Reference"
-      }
-    },
-    "/api/v1/references/{ref_id}/submit": {
-      "post": {
-        "operationId": "submit_reference_api_v1_references__ref_id__submit_post",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "ref_id",
-            "required": true,
-            "schema": {
-              "title": "Ref Id",
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ReviewNoteIn"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Submit Reference"
-      }
-    },
-    "/api/v1/references/{ref_id}/supersede": {
-      "post": {
-        "operationId": "supersede_reference_api_v1_references__ref_id__supersede_post",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "ref_id",
-            "required": true,
-            "schema": {
-              "title": "Ref Id",
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ReferenceIn"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Supersede Reference"
-      }
-    },
-    "/api/v1/references/{ref_id}/verify": {
-      "post": {
-        "operationId": "verify_reference_api_v1_references__ref_id__verify_post",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "ref_id",
-            "required": true,
-            "schema": {
-              "title": "Ref Id",
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ReviewNoteIn"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Verify Reference"
+        "summary": "Search"
       }
     }
   }
