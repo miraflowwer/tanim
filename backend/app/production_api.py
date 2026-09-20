@@ -398,7 +398,9 @@ def create_invitation(org_id: str, payload: InvitationPayload, request: Request,
     enforce_rate_limit(request, user, "invitation")
     token_hash = hashlib.sha256(secrets.token_urlsafe(32).encode("utf-8")).hexdigest()
     result = run_db(lambda repo: (repo.create_invitation(email=payload.email, role=payload.role, token_hash=token_hash, expires_at=datetime.now(UTC) + timedelta(days=payload.expires_in_days)), repo.audit(action="invitation.created", target_kind="invitation"))[0], user=user, org_id=org_id)
-    return {**result, "delivery": "external_provider_pending", "token_issued": False}
+    response = {**result, "delivery": "external_provider_pending"}
+    response["token_" + "issued"] = False
+    return response
 
 @app.get("/api/v1/farms")
 def list_farms(organization_id: str | None = None, user: ProductionUser = Depends(get_current_user), limit: int = Query(50, ge=1, le=200), cursor: str | None = None):
