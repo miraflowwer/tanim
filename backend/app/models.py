@@ -1,4 +1,4 @@
-"""SQLAlchemy 2 models mirroring alembic 0001 (PRD §§17, 18, 19, 39, 40).
+"""SQLAlchemy 2 models mirroring alembic 0001 (PRD ??17, 18, 19, 39, 40).
 
 Evidence never overwritten: new version rows supersede old ones; audit /
 calculation / plan-revision rows are append-only (see migration trigger+RLS).
@@ -34,7 +34,7 @@ class Base(DeclarativeBase):
 
 
 class Geography(UserDefinedType):
-    """PostGIS GEOGRAPHY(Point, 4326); NULL unless consented (§19)."""
+    """PostGIS GEOGRAPHY(Point, 4326); NULL unless consented (?19)."""
 
     cache_ok = True
 
@@ -70,6 +70,7 @@ class Organization(Base):
     slug: Mapped[str] = mapped_column(Text, unique=True)
     version: Mapped[int] = mapped_column(Integer, default=1)
     created_at: Mapped[datetime] = _now()
+    default_geography: Mapped[str | None] = mapped_column(Text)
     updated_at: Mapped[datetime] = _now()
 
 
@@ -78,7 +79,9 @@ class User(Base):
     id: Mapped[uuid.UUID] = _pk()
     email: Mapped[str] = mapped_column(Text, unique=True)
     display_name: Mapped[str] = mapped_column(Text)
-    password_hash: Mapped[str] = mapped_column(Text)
+    password_hash: Mapped[str | None] = mapped_column(Text, nullable=True)
+    provider_subject: Mapped[str | None] = mapped_column(Text, unique=True)
+    is_platform: Mapped[bool] = mapped_column(Boolean, server_default="false")
     created_at: Mapped[datetime] = _now()
     updated_at: Mapped[datetime] = _now()
 
@@ -167,7 +170,7 @@ class PlantingPlan(Base):
 
 
 class PlantingPlanRevision(Base):
-    """Append-only revision chain; never UPDATE/DELETE (§17)."""
+    """Append-only revision chain; never UPDATE/DELETE (?17)."""
     __tablename__ = "planting_plan_revisions"
     __table_args__ = (
         UniqueConstraint("plan_id", "revision_number",
@@ -217,13 +220,22 @@ class DataSourceVersion(Base):
     fetched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True),
                                                  server_default="now()")
     promoted_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True))  # NULL = staged, not yet promoted (§38)
+        DateTime(timezone=True))  # NULL = staged, not yet promoted (?38)
     checksum: Mapped[str | None] = mapped_column(Text)
     payload_ref: Mapped[str | None] = mapped_column(Text)
+    period_start: Mapped[date | None] = mapped_column(Date)
+    period_end: Mapped[date | None] = mapped_column(Date)
+    row_count: Mapped[int] = mapped_column(Integer, server_default="0")
+    validation_status: Mapped[str] = mapped_column(Text, server_default="pending")
+    validation_errors: Mapped[list | None] = mapped_column(JSONB)
+    normalization_version: Mapped[str | None] = mapped_column(Text)
+    staged_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    promoted_by: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"))
+    is_current: Mapped[bool] = mapped_column(Boolean, server_default="false")
 
 
 class _EvidenceMixin:
-    """Version + review state + validity window + supersede chain (§17)."""
+    """Version + review state + validity window + supersede chain (?17)."""
     version: Mapped[int] = mapped_column(Integer, default=1)
     status: Mapped[str] = mapped_column(
         VerificationStatus, server_default="user_provided_unverified")
@@ -300,7 +312,7 @@ class ReferenceReview(Base):
 
 
 class PriceObservation(_EvidenceMixin, Base):
-    """Context only — never R (§14.2)."""
+    """Context only ? never R (?14.2)."""
     __tablename__ = "price_observations"
     __table_args__ = (CheckConstraint("price > 0", name="ck_price_pos"),)
     id: Mapped[uuid.UUID] = _pk()
@@ -318,7 +330,7 @@ class PriceObservation(_EvidenceMixin, Base):
 
 
 class ClimateContext(_EvidenceMixin, Base):
-    """Context only (§14.4)."""
+    """Context only (?14.4)."""
     __tablename__ = "climate_context"
     id: Mapped[uuid.UUID] = _pk()
     org_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("organizations.id"),
@@ -332,7 +344,7 @@ class ClimateContext(_EvidenceMixin, Base):
 
 
 class WeatherObservation(Base):
-    """Cached, optional (§14.5)."""
+    """Cached, optional (?14.5)."""
     __tablename__ = "weather_observations"
     id: Mapped[uuid.UUID] = _pk()
     org_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("organizations.id"),
@@ -347,7 +359,7 @@ class WeatherObservation(Base):
 
 
 class SuitabilityReference(_EvidenceMixin, Base):
-    """NCCAG layer identity kept (§14.6)."""
+    """NCCAG layer identity kept (?14.6)."""
     __tablename__ = "suitability_references"
     id: Mapped[uuid.UUID] = _pk()
     org_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("organizations.id"),
@@ -362,7 +374,7 @@ class SuitabilityReference(_EvidenceMixin, Base):
 
 
 class CalculationPolicy(Base):
-    """Global thresholds; change => new version row (§12)."""
+    """Global thresholds; change => new version row (?12)."""
     __tablename__ = "calculation_policies"
     id: Mapped[uuid.UUID] = _pk()
     version: Mapped[int] = mapped_column(Integer, unique=True)
@@ -374,7 +386,7 @@ class CalculationPolicy(Base):
 
 
 class CalculationRun(Base):
-    """Append-only; full version bundle + S/L + observability (§§12, 33)."""
+    """Append-only; full version bundle + S/L + observability (??12, 33)."""
     __tablename__ = "calculation_runs"
     __table_args__ = (CheckConstraint(
         "duration_ms IS NULL OR duration_ms >= 0",
@@ -405,12 +417,13 @@ class CalculationRun(Base):
     status: Mapped[str] = mapped_column(CalcStatus)
     request_id: Mapped[str] = mapped_column(Text, unique=True)
     duration_ms: Mapped[int | None] = mapped_column(Integer)
+    result_json: Mapped[dict | None] = mapped_column(JSONB)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True),
                                                  server_default="now()")
 
 
 class ConsentRecord(Base):
-    """Operational vs research consent split (§8.7)."""
+    """Operational vs research consent split (?8.7)."""
     __tablename__ = "consent_records"
     __table_args__ = (
         UniqueConstraint(
@@ -434,7 +447,7 @@ class ConsentRecord(Base):
 
 
 class AuditEvent(Base):
-    """Immutable: actor + time + target + action (§40)."""
+    """Immutable: actor + time + target + action (?40)."""
     __tablename__ = "audit_events"
     __table_args__ = (CheckConstraint(
         "action IN ('reference.created','reference.submitted',"

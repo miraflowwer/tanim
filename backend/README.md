@@ -1,61 +1,34 @@
 # TANIM backend
 
-The production target is FastAPI + SQLAlchemy 2 + Alembic on PostgreSQL/PostGIS.
-The deterministic in-memory store remains a development/demo adapter until the
-route repository adapter is wired.
+The production target is FastAPI + SQLAlchemy 2 + Alembic on PostgreSQL/PostGIS. Runtime selection is explicit: TANIM_RUNTIME_MODE=inmemory is the seeded demo adapter, while postgres, production, and prod select the durable repository. An omitted mode fails closed to PostgreSQL.
 
-## Runtime modes
+## Runtime configuration
 
-Set the mode explicitly in deployment:
+Production requires:
 
-~~~powershell
-cd backend
-$env:TANIM_RUNTIME_MODE = "inmemory"
-$env:ALLOW_DEV_AUTH = "true"
-uvicorn app.main:app --reload
-~~~
+- DATABASE_URL using a PostgreSQL driver and a database with PostGIS enabled
+- TANIM_RUNTIME_MODE=postgres
+- SUPABASE_JWKS_URL over HTTPS, or SUPABASE_JWT_SECRET for the configured Supabase signing mode
+- SUPABASE_JWT_ISSUER and SUPABASE_JWT_AUDIENCE when the issuer/audience are enforced
+- A durable users row keyed by provider_subject and organization memberships
+- A database role that is not the table owner, is not SUPERUSER, and does not have BYPASSRLS
 
-Development mode uses seeded data and dev:user:role:org tokens only when
-ALLOW_DEV_AUTH=true. It must never be enabled in production.
+Development-only variables are TANIM_RUNTIME_MODE=inmemory and ALLOW_DEV_AUTH=true. They must never be enabled in production. Supabase Auth owns login, refresh, recovery, and session lifecycle; the backend exposes auth/session as external-auth-only.
 
-An omitted runtime mode fails closed as PostgreSQL. Production also requires a database URL:
+Optional operational variables include TANIM_RATE_LIMIT_PER_MINUTE, TANIM_BODY_LIMIT_BYTES, TANIM_INGESTION_MAX_AGE_DAYS, TANIM_MAP_MIN_GROUP_SIZE, and TANIM_FORCE_HSTS.
 
-~~~powershell
-cd backend
-$env:TANIM_RUNTIME_MODE = "postgres"
-$env:DATABASE_URL = "postgresql+psycopg://user:password@host/tanim"
-alembic upgrade head
-uvicorn app.main:app
-~~~
+## Run and migrate
 
-PostgreSQL mode requires PostGIS. The readiness endpoint checks database and
-PostGIS availability. Core API routes return a structured unavailable response
-until their SQLAlchemy repository adapter is wired; this prevents the
-in-memory adapter from being presented as production persistence or RLS.
+From the repository root, build the provider-neutral image with the repository root as the Docker build context. The image runs app.main:app with PYTHONPATH including backend.
 
-## Migrations and tenant isolation
+For a deployment, run alembic -c backend/alembic.ini upgrade head before starting the API. The readiness endpoint requires a successful database connection, PostGIS, and migration head 0002_platform_durability. Do not route production traffic when readiness is false.
 
-alembic/versions/0001_entities.py enables PostGIS, creates the SQLAlchemy
-schema, installs forced row-level security policies, and adds append-only
-triggers for audit, calculation, revision, and review history. Deploy the API
-with a separate non-owner PostgreSQL role that has neither SUPERUSER nor
-BYPASSRLS.
+## Persistence and security
 
-Mechanism-level RLS tests are in tests/test_postgres_rls.py. Set
-TANIM_TEST_DATABASE_URL to the application role and
-TANIM_RLS_ADMIN_DATABASE_URL to a disposable setup role; if only
-DATABASE_URL is supplied, the test creates a temporary non-privileged role
-through the disposable admin connection.
+backend/app/repositories/postgres.py is the production boundary. backend/app/legacy_api.py and app/store.py remain the explicit demo adapter only. Tenant transactions set app.current_org_id, app.current_user_id, and app.current_role locally; PostgreSQL forced RLS is the second enforcement layer after application authorization.
 
-## Layout
+Plan revisions, calculation runs, reviews, audit events, and consent history are append-only or versioned. Data-source versions are immutable payload references with validation status, checksum, staging, and promotion metadata. Historical calculations retain the engine, policy, registry, evidence identifiers, versions, and result JSON used at calculation time.
 
-- app/main.py — FastAPI API contract and development adapter routes.
-- ../scripts/grci.py — framework-independent authoritative calculation domain; app/grci.py only re-exports it.
-- app/schemas.py — strict request schemas and domain-compatible response contracts.
-- app/models.py — SQLAlchemy/PostGIS persistence model.
-- app/db.py — explicit runtime mode, readiness, and tenant session context.
-- alembic/ — PostgreSQL/PostGIS schema and RLS migration.
-- tests/ — domain, API, authorization, and PostgreSQL mechanism tests (run against a disposable PostGIS service in CI).
+## Verification
 
-OpenAPI is generated from the FastAPI app with
-python scripts/generate_openapi.py --check.
+Run the backend test suite with pytest. PostgreSQL mechanism tests require a disposable PostGIS database and exercise migration upgrade/downgrade/upgrade, the restricted application role, wrong-tenant reads/writes, forced RLS, and append-only triggers. Generate or verify the production OpenAPI contract with scripts/generate_openapi.py.

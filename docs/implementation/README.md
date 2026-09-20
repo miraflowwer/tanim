@@ -1,28 +1,26 @@
 # TANIM parallel implementation workspace
 
-This folder is the coordination surface for the final product implementation.
-
-The current integration baseline is `main` at `2186fbdc8979b814d5c672b68fb170157fc4af9a`. The integration branch is `feat/final-product-integration`.
+This folder is the coordination surface for the final product implementation. The Member 3 work is being completed on feat/m3-backend-platform from the bootstrap branch.
 
 ## Parallel branches
 
-- `feat/m1-farmer-frontend`: shared frontend foundation, authentication/onboarding UI, and Farmer workspace
-- `feat/m2-operations-frontend`: Coordinator, Reviewer, Admin, maps/charts/context, notifications/search/history
-- `feat/m3-backend-platform`: backend, PostgreSQL/PostGIS, APIs, ingestion, security/operations, and release
+- feat/m1-farmer-frontend: shared frontend foundation, authentication/onboarding UI, and Farmer workspace
+- feat/m2-operations-frontend: Coordinator, Reviewer, Admin, maps/charts/context, notifications/search/history
+- feat/m3-backend-platform: backend, PostgreSQL/PostGIS, APIs, ingestion, security/operations, and release
 
 ## Coordination files
 
-- [OWNERSHIP.md](OWNERSHIP.md): default file ownership and conflict rules
-- [API_REQUESTS.md](API_REQUESTS.md): frontend-to-backend contract requests
-- [DECISIONS.md](DECISIONS.md): cross-member architecture and product decisions
-- [BLOCKERS.md](BLOCKERS.md): integration blockers that need another owner
-- [TRACEABILITY_STATUS.md](TRACEABILITY_STATUS.md): implementation completion status
+- OWNERSHIP.md: default file ownership and conflict rules
+- API_REQUESTS.md: frontend-to-backend contract ledger
+- DECISIONS.md: cross-member architecture decisions
+- BLOCKERS.md: environment and cross-member release gates
+- TRACEABILITY_STATUS.md: evidence matrix for Member 3 and integration status
 
 ## Rules
 
-1. Work on the member branch or a short-lived sub-branch. Do not develop directly on `main`.
-2. Keep feature code in feature-local modules. Avoid turning `app/src/App.tsx`, `app/src/lib/api.ts`, or `app/src/types.ts` into shared conflict zones.
-3. The browser never implements trusted GRCI calculation or evidence eligibility.
-4. When a frontend API is missing, record the contract in `API_REQUESTS.md` instead of inventing server behavior.
-5. Mobile behavior is part of feature completion, not a later polish pass.
-6. Rebase or merge the integration branch regularly rather than waiting until the end.
+1. Work on a feature branch and open one reviewable pull request.
+2. Keep Member 1 and Member 2 feature directories unchanged unless a contract fix is explicitly agreed.
+3. Production routes use the repository boundary and never use the global demo store.
+4. The browser never implements trusted GRCI calculation or evidence eligibility.
+5. Mobile and desktop integration evidence is recorded separately from backend implementation.
+6. Keep the frozen web/ path until the production cutover gates are approved.

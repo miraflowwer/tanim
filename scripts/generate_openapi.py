@@ -7,12 +7,15 @@ Run from the repository root:
 """
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "openapi" / "openapi.json"
 sys.path.insert(0, str(ROOT))
+# The checked-in contract must describe the durable production adapter, never the in-memory demo.
+os.environ["TANIM_RUNTIME_MODE"] = "postgres"
 
 from backend.app.main import app  # noqa: E402
 

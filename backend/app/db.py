@@ -98,10 +98,24 @@ def check_readiness() -> tuple[bool, dict[str, Any]]:
             postgis_version = connection.execute(
                 text("SELECT PostGIS_Version()")
             ).scalar_one()
+            migration = connection.execute(
+                text("SELECT version_num FROM alembic_version")
+            ).scalar_one_or_none()
+            expected = "0002_platform_durability"
+            if migration != expected:
+                return False, {
+                    "mode": "postgres",
+                    "database": "not_ready",
+                    "postgis": str(postgis_version),
+                    "migration": str(migration or "missing"),
+                    "expected_migration": expected,
+                }
         return True, {
             "mode": "postgres",
             "database": "ok",
             "postgis": str(postgis_version),
+            "migration": "0002_platform_durability",
+            "repository": "postgresql",
         }
     except (SQLAlchemyError, RuntimeError, OSError) as exc:
         return False, {

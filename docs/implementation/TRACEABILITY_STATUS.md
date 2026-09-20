@@ -1,35 +1,39 @@
-# TANIM final implementation status
+# TANIM Member 3 traceability status
 
-This is the live implementation status, not a replacement for the finalized product specifications.
+This ledger is for feat/m3-backend-platform. It records implementation evidence for the durable backend/platform scope and does not claim a production cutover. PR reference is #11; this ledger is updated with final branch evidence.
 
-## Bootstrap
+| Matrix row | Owner | Status | API or implementation evidence | Test evidence | Desktop status | Mobile status | PR reference | Blockers |
+|---|---|---|---|---|---|---|---|---|
+| Traceability and release ledger | Member 3 | Implemented | This ledger, API_REQUESTS.md, BLOCKERS.md | CI documentation check and PR review | Integration pending | Integration pending | PR #11 (open) | M1/M2 integration review |
+| Repository boundary | Member 3 | Implemented | backend/app/repositories/base.py, memory.py, postgres.py; production_api imports PostgresRepository only | Production boundary AST test; PostgreSQL repository/RLS suite | Contract ready | Contract ready | PR #11 (open) | Live managed database |
+| Durable SQLAlchemy models | Member 3 | Implemented | backend/app/models.py and platform_models.py cover organizations, users, memberships, plans, revisions, evidence, consent, audit, calculations, source versions, settings, invitations, sessions, notifications, exports, ingestion | Alembic upgrade and downgrade gate | Contract ready | Contract ready | PR #11 (open) | Staging schema rehearsal |
+| Alembic and PostGIS | Member 3 | Implemented | 0001_entities.py and 0002_platform_durability.py; PostGIS readiness and migration-head check | CI upgrade -> downgrade -> upgrade; restricted-role readiness checks | Not applicable | Not applicable | PR #11 (open) | Staging database approval |
+| Transactional plan and calculation workflows | Member 3 | Implemented | tenant_repo transaction wrapper; append_revision, cancel_plan, create_calculation, policy and consent writes | Existing API tests, append-only trigger checks, wrong-tenant rollback test | Contract ready | Contract ready | PR #11 (open) | End-to-end staging data |
+| Tenant isolation and RLS | Member 3 | Implemented | SET LOCAL-style transaction-local app.current_org_id, app.current_user_id, app.current_role; forced RLS policies; platform global audit policy | Non-owner, non-superuser, non-BYPASSRLS PostgreSQL tests | Not applicable | Not applicable | PR #11 (open) | Managed role provisioning |
+| Supabase Auth boundary | Member 3 | Implemented | production_auth.py validates Supabase JWT/JWKS, provider subject, durable user and memberships; dev tokens rejected; auth/session is external-auth-only | JWT failure, HTTPS JWKS, dev-token rejection, production contract tests | Contract ready | Contract ready | PR #11 (open) | Supabase issuer/JWKS secrets |
+| Organization, members, settings, invitations | Member 3 | Implemented | Organization and member routes, settings, invitation listing/creation, role change/removal | Existing authorization tests plus API contract/OpenAPI checks | Integration pending | Integration pending | PR #11 (open) | M1/M2 UI integration |
+| Plans, revisions, calculation history | Member 3 | Implemented | Plans, revisions, calculate, calculation detail/history; result_json and provenance version fields | GRCI authority and calculation tests; append-only history trigger checks | Contract ready | Contract ready | PR #11 (open) | Live PostGIS smoke |
+| Aggregates, timelines, attention, map privacy | Member 3 | Implemented | Organization aggregate, geo-aggregate, timeline, attention-item, privacy-safe map-data routes | Contract schema and privacy-safe response tests | Integration pending | Integration pending | PR #11 (open) | M2 map/chart contract confirmation |
+| Notifications and authorized search | Member 3 | Implemented | Notification listing/read routes and tenant-scoped paginated search | Pagination and authorization tests | Integration pending | Integration pending | PR #11 (open) | M2 UI contract confirmation |
+| Exports and audit filtering | Member 3 | Implemented | Export create/list/detail and reviewer/admin audit filtering | Authorization, append-only audit, safe error tests | Integration pending | Integration pending | PR #11 (open) | Export worker/object storage selection |
+| Source metadata and version history | Member 3 | Implemented | Data-source detail, versions, freshness, immutable checksum/version indexes | Duplicate/stale validation and version history tests | Contract ready | Contract ready | PR #11 (open) | Source provider credentials |
+| Ingestion lifecycle | Member 3 | Implemented | platform ingestion run/retry/version/promotion routes; fetch, validate, normalize, version, stage, promote, monitor stages | Valid/failed/stale/duplicate/negative/unknown crop tests; safe retry and audit paths | Contract ready | Contract ready | PR #11 (open) | Provider fetch adapters are deployment-specific |
+| Platform-only promotion and provenance | Member 3 | Implemented | platform authority check, source promotion audit, immutable DataSourceVersion rows, calculation provenance ids/versions | Promotion authorization and append-only PostgreSQL checks | Not applicable | Not applicable | PR #11 (open) | Platform identity provisioning |
+| Security headers, rate limiting, request IDs, safe logs | Member 3 | Implemented | production_api middleware and ops.py; database-backed rate_limit_buckets | Headers, request-ID, rate-limit, redaction tests | Contract ready | Contract ready | PR #11 (open) | Proxy-level rate limits still recommended |
+| Health, readiness, metrics | Member 3 | Implemented | health, readiness, metrics and platform observability routes; PostGIS and Alembic head required | Unavailable readiness and restricted-role checks | Not applicable | Not applicable | PR #11 (open) | Host monitoring configuration |
+| OpenAPI contract | Member 3 | Implemented; generated file checked and verified by CI run 35479436314 | scripts/generate_openapi.py forces production adapter; openapi/openapi.json checked in | OpenAPI check in CI | Contract ready | Contract ready | PR #11 (open) | Generated schema must be refreshed at final head |
+| Packaging and operations | Member 3 | Implemented | backend/Dockerfile, docs/DEPLOYMENT.md, docs/implementation/OPERATIONS.md, RELEASE_CHECKLIST.md | CI lint/security and documented rehearsal gates | Not applicable | Not applicable | PR #11 (open) | Provider, secrets, backup and staging choices |
+| Frozen fallback web rollback | Member 3 + all | Preserved | web/, api/, scripts/service.py remain unchanged by this scope | Existing hackathon-web tests/build | Existing web path | Existing web path | PR #11 (open) | Separate approved cutover only |
+| Integrated desktop/mobile release | Member 3 + Members 1/2 | Pending integration | Versioned production API is available; frontend directories intentionally unchanged | Existing frontend/browser jobs run in CI; final integration smoke remains | Pending M1 integration | Pending M2 integration | PR #11 (open) | Need integration branch preview and manual smoke |
+| Production cutover | Member 3 + release owner | Not authorized | Runbooks define gates; no production host, database, secrets, backup, or staging approval is assumed | Environment-dependent gates are explicitly listed in BLOCKERS.md | Not applicable | Not applicable | PR #11 (open) | Staging approval, restore rehearsal, privacy/ethical review |
 
-| Item | Owner | Status | Evidence |
-|---|---|---|---|
-| Integration branch | Member 1 | Complete | `feat/final-product-integration` |
-| Ownership map | Member 1 | Complete | `docs/implementation/OWNERSHIP.md` |
-| API request protocol | Member 1 / Member 3 | Complete | `docs/implementation/API_REQUESTS.md` |
-| Cross-member decision log | All | Complete | `docs/implementation/DECISIONS.md` |
-| Blocker log | All | Complete | `docs/implementation/BLOCKERS.md` |
-| Role route extension points | Member 1 | Complete | `app/src/app/routes/` |
-| Root App uses route modules | Member 1 | Complete | `app/src/App.tsx` |
+## Evidence rules
 
-## Member workstreams
+A row is not marked production-complete solely because code exists. CI evidence is required for the branch, and staging evidence is required for cutover. Desktop and mobile statuses above describe integration ownership, not a claim that Member 3 changed UI code.
+## Final branch evidence
 
-| Workstream | Owner | Status |
-|---|---|---|
-| Shared frontend + responsive shell | Member 1 | Ready |
-| Auth/account frontend | Member 1 | Ready |
-| Organization onboarding frontend | Member 1 | Ready |
-| Farmer workspace | Member 1 | Ready |
-| Coordinator workspace | Member 2 | Ready |
-| Maps/charts/context | Member 2 | Ready |
-| Evidence/Reviewer | Member 2 | Ready |
-| Admin/governance | Member 2 | Ready |
-| Notifications/search/history | Member 2 | Ready |
-| PostgreSQL/API durability | Member 3 | Ready |
-| Data ingestion/versioning | Member 3 | Ready |
-| Security/observability/operations | Member 3 | Ready |
-| Integrated release/cutover | Member 3 + all | Waiting for implementation |
-
-For each implementation PR, add its PR number, test evidence, desktop status, mobile status, and unresolved dependencies before marking a workstream Complete.
+- Pull request: https://github.com/miraflowwer/tanim/pull/11
+- CI run: https://github.com/miraflowwer/tanim/actions/runs/35479436314
+- Python, PostgreSQL/PostGIS, frontend/browser, fallback-web, and live-OpenStat jobs passed.
+- OpenAPI schema is checked in at openapi/openapi.json and the generator check passed.
+- Desktop/mobile rows remain integration-pending because Member 3 did not modify Member 1/2 feature directories; the frozen web/ rollback path remains intact.
