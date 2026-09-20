@@ -21,7 +21,7 @@ This ledger is for feat/m3-backend-platform. It records implementation evidence 
 | Platform-only promotion and provenance | Member 3 | Implemented | platform authority check, source promotion audit, immutable DataSourceVersion rows, calculation provenance ids/versions | Promotion authorization and append-only PostgreSQL checks | Not applicable | Not applicable | PR #11 (open) | Platform identity provisioning |
 | Security headers, rate limiting, request IDs, safe logs | Member 3 | Implemented | production_api middleware and ops.py; database-backed rate_limit_buckets | Headers, request-ID, rate-limit, redaction tests | Contract ready | Contract ready | PR #11 (open) | Proxy-level rate limits still recommended |
 | Health, readiness, metrics | Member 3 | Implemented | health, readiness, metrics and platform observability routes; PostGIS and Alembic head required | Unavailable readiness and restricted-role checks | Not applicable | Not applicable | PR #11 (open) | Host monitoring configuration |
-| OpenAPI contract | Member 3 | Implemented; generated file checked and verified by CI run 35479250100 | scripts/generate_openapi.py forces production adapter; openapi/openapi.json checked in | OpenAPI check in CI | Contract ready | Contract ready | PR #11 (open) | Generated schema must be refreshed at final head |
+| OpenAPI contract | Member 3 | Implemented; generated file checked and verified by CI run 35479436314 | scripts/generate_openapi.py forces production adapter; openapi/openapi.json checked in | OpenAPI check in CI | Contract ready | Contract ready | PR #11 (open) | Generated schema must be refreshed at final head |
 | Packaging and operations | Member 3 | Implemented | backend/Dockerfile, docs/DEPLOYMENT.md, docs/implementation/OPERATIONS.md, RELEASE_CHECKLIST.md | CI lint/security and documented rehearsal gates | Not applicable | Not applicable | PR #11 (open) | Provider, secrets, backup and staging choices |
 | Frozen fallback web rollback | Member 3 + all | Preserved | web/, api/, scripts/service.py remain unchanged by this scope | Existing hackathon-web tests/build | Existing web path | Existing web path | PR #11 (open) | Separate approved cutover only |
 | Integrated desktop/mobile release | Member 3 + Members 1/2 | Pending integration | Versioned production API is available; frontend directories intentionally unchanged | Existing frontend/browser jobs run in CI; final integration smoke remains | Pending M1 integration | Pending M2 integration | PR #11 (open) | Need integration branch preview and manual smoke |
@@ -33,7 +33,7 @@ A row is not marked production-complete solely because code exists. CI evidence 
 ## Final branch evidence
 
 - Pull request: https://github.com/miraflowwer/tanim/pull/11
-- CI run: https://github.com/miraflowwer/tanim/actions/runs/35479250100
+- CI run: https://github.com/miraflowwer/tanim/actions/runs/35479436314
 - Python, PostgreSQL/PostGIS, frontend/browser, fallback-web, and live-OpenStat jobs passed.
 - OpenAPI schema is checked in at openapi/openapi.json and the generator check passed.
 - Desktop/mobile rows remain integration-pending because Member 3 did not modify Member 1/2 feature directories; the frozen web/ rollback path remains intact.

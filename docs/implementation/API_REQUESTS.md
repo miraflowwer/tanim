@@ -30,6 +30,6 @@ This ledger records backend contracts needed by the Member 1 and Member 2 client
 ## Finalized branch evidence
 
 - The production contract is generated from backend.app.main with TANIM_RUNTIME_MODE=postgres.
-- openapi/openapi.json is committed and matches scripts/generate_openapi.py --check in CI run 35479250100.
+- openapi/openapi.json is committed and matches scripts/generate_openapi.py --check in CI run 35479436314.
 - Stable error envelopes include code, safe message, and request ID; ingestion, source-version, authorization, pagination, readiness, and privacy states are recorded above.
 - Remaining client work is explicitly cross-member integration (BLOCK-003), not an undocumented backend contract.
